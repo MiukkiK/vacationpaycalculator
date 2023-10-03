@@ -12,14 +12,14 @@ public class FileHandler {
 			File file = new File(source);
 			Scanner scanner = new Scanner(file);
 			while (scanner.hasNextLine()) {
-				String[] data = scanner.nextLine().split("\\t", -1);
-				LocalDate date = LocalDate.parse(data[0], DateTimeFormatter.ofPattern("M/d/yyyy"));
-				String info = data[1];
-				double hours = 0;
-				double bonus = 0;
-				if (data[4] != "") hours = Double.parseDouble(data[4]);
-				if (data[7] != "") bonus = Double.parseDouble(data[7].replace("€", ""));
-				record.add(new EmploymentData(date, info, hours, bonus));
+				String[] data = scanner.nextLine().split("\\t", -1);		
+				if (data[4] != "") {
+					LocalDate date = LocalDate.parse(data[0], DateTimeFormatter.ofPattern("M/d/yyyy"));
+					double bonus = 0;
+					double hours = Double.parseDouble(data[4]);
+					if (data[7] != "") bonus = Double.parseDouble(data[7].replace("€", ""));
+					record.add(new EmploymentData(date, hours, bonus));
+				}
 			}
 			scanner.close();
 		} catch (FileNotFoundException e) {

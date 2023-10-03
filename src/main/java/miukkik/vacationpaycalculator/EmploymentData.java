@@ -4,24 +4,18 @@ import java.time.LocalDate;
 
 public class EmploymentData {
 	private LocalDate date;
-	private String info;
 	private double hours;
 	private double bonus;
+	private double wage;
 	
-	public EmploymentData(LocalDate date, String info, double hours, double bonus) {
-		super();
+	public EmploymentData(LocalDate date, double hours, double bonus) {
 		this.date = date;
-		this.info = info;
 		this.hours = hours;
 		this.bonus = bonus;
 	}
 
 	public LocalDate getDate() {
 		return date;
-	}
-
-	public String getInfo() {
-		return info;
 	}
 
 	public double getHours() {
@@ -31,10 +25,18 @@ public class EmploymentData {
 	public double getBonus() {
 		return bonus;
 	}
+	
+	public double getWage() {
+		return wage;
+	}
+
+	public void setWage(double wage) {
+		this.wage = wage;
+	}
 
 	@Override
 	public String toString() {
-		return "EmploymentData [date=" + date + ", info=" + info + ", hours=" + hours + ", bonus=" + bonus + "]";
+		return "EmploymentData [date=" + date + ", hours=" + hours + ", bonus=" + bonus + "]";
 	}
 	
 }

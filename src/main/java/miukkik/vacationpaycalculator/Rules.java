@@ -3,32 +3,27 @@ package miukkik.vacationpaycalculator;
 import java.time.LocalDate;
 
 public class Rules {
-	private double firstYearPercent;
-	private double defaultPercent;
-	LocalDate cutOffDate;
+	//
+	private static double firstYearPercent = 10;
+	private static double defaultPercent = 12.5;
+	//
+	private static int cutOffMonth = 3;
+	private static int cutOffDay = 31;
 	
-	public Rules() {
-		firstYearPercent = 10;
-		defaultPercent = 12.5;
+	public static double getFirstYearPercent() {
+		return firstYearPercent;
 	}
-	
-	public double getFirstYearPercent() {
-		return (firstYearPercent / 100);
+
+	public static double getDefaultPercent() {
+		return defaultPercent;
 	}
-	public void setFirstYearPercent(double firstYearPercent) {
-		this.firstYearPercent = firstYearPercent;
+
+	public static LocalDate getCutOffDate(int year) { 
+		return LocalDate.of(year, cutOffMonth, cutOffDay);
 	}
-	public double getDefaultPercent() {
-		return (defaultPercent / 100);
-	}
-	public void setDefaultPercent(double defaultPercent) {
-		this.defaultPercent = defaultPercent;
-	}
-	
+
 	@Override
 	public String toString() {
-		return "Conditions [firstYearPercent=" + firstYearPercent + ", defaultPercent=" + defaultPercent
-				+ "]";
+		return "Rules: First Year Percent = " + firstYearPercent + ", Default Percent = " + defaultPercent + "]";
 	}
-	
 }
