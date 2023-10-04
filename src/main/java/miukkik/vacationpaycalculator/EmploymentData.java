@@ -22,8 +22,16 @@ public class EmploymentData {
 		return hours;
 	}
 
+	public void setHours(double hours) {
+		this.hours = hours;
+	}
+
 	public double getBonus() {
 		return bonus;
+	}
+	
+	public void setBonus(double bonus) {
+		this.bonus = bonus;
 	}
 	
 	public double getWage() {

@@ -7,20 +7,15 @@ import java.util.List;
 public class EmployeeRecord implements EmploymentDataInterface{
 	private boolean salariedStatus;
 	private LocalDate startDate;
-	private double wage;
+	private double currentWage;
 	private ArrayList<EmploymentData> record;
 	
 	
 	public EmployeeRecord(LocalDate startDate, double startWage) {
 		salariedStatus = false;
 		this.startDate = startDate;
-		wage = startWage;
+		currentWage = startWage;
 		record = new ArrayList<EmploymentData>();
-	}
-	
-	public void add(EmploymentData data) {
-		data.setWage(wage);
-		record.add(data);
 	}
 	
 	public boolean isSalaried() {
@@ -39,8 +34,21 @@ public class EmployeeRecord implements EmploymentDataInterface{
 		for (EmploymentData data : record) {
 			if(!data.getDate().isBefore(changeDate)) data.setWage(newWage);
 		}
-		wage = newWage;
+		currentWage = newWage;
 	}
+	
+	public void add(EmploymentData data) {
+		data.setWage(currentWage);
+		record.add(data);
+	}
+	
+	public void mergeData(EmploymentData data) {
+		EmploymentData previousRecord = record.get(record.size()-1); 
+		if(previousRecord.getDate().isEqual(data.getDate())) {
+			previousRecord.setHours(previousRecord.getHours() + data.getHours());
+			previousRecord.setBonus(previousRecord.getBonus() + data.getBonus());
+		}
+	}	
 	
 	public ArrayList<EmploymentData> getRecord() {
 		return record;

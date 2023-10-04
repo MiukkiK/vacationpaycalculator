@@ -17,7 +17,7 @@ public class RunVacationPayCalculator {
 		testCaseB.setSalariedStatus(true);
 		testCaseB.setWageFrom(LocalDate.of(2009, 10, 15), 11);
 		
-		VacationPayCalculator calculatorB = new VacationPayCalculator(testCaseA, 2010);
+		VacationPayCalculator calculatorB = new VacationPayCalculator(testCaseB, 2010);
 		System.out.println(calculatorB.toString());
 	}
 }
