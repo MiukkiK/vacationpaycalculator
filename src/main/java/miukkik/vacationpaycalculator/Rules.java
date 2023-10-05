@@ -14,33 +14,27 @@ public class Rules {
 	private static int cutOffMonth = 3;
 	private static int cutOffDay = 31;
 	
-	private static int salariedDayRquirement = 14;
-	private static double nonSalariedHourRequirement = 35;
+	private static int vacationDayRquirement = 14;
+	private static double vacationHourRequirement = 35;
 	
-	public static double getFirstYearPercent() {
-		return firstYearPercent;
-	}
-
-	public static double getDefaultPercent() {
-		return defaultPercent;
+	public static double getPercentileMultiplier(LocalDate startDate, LocalDate cutOffDate) {
+		if (startDate.isBefore(cutOffDate.minusYears(2))) return defaultPercent / 100;
+		else return firstYearPercent / 100;
 	}
 	
-	public static int getSalariedDayRequirement() {
-		return salariedDayRquirement;
+	public static double getVacationDayMultiplier(LocalDate startDate, LocalDate cutOffDate) {
+		if (startDate.isBefore(cutOffDate.minusYears(2))) return defaultVacationDays;
+		else return firstYearVacationDays;
+	}
+	
+	public static int getVacationDaysRequirement() {
+		return vacationDayRquirement;
 	}
 
-	public static double getNonSalariedHourRequirement() {
-		return nonSalariedHourRequirement;
+	public static double getVacationHoursRequirement() {
+		return vacationHourRequirement;
 	}	
 	
-	public static double getFirstYearVacationDays() {
-		return firstYearVacationDays;
-	}
-
-	public static double getDefaultVacationDays() {
-		return defaultVacationDays;
-	}
-
 	public static LocalDate getCutOffDate(int year) { 
 		return LocalDate.of(year, cutOffMonth, cutOffDay);
 	}

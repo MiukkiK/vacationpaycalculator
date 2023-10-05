@@ -10,7 +10,7 @@ public class RunVacationPayCalculator {
 		testCaseA.setWageFrom(LocalDate.of(2009, 10, 15), 11);
 
 		VacationPayCalculator calculatorA = new VacationPayCalculator(testCaseA, 2010);
-		System.out.println(calculatorA.toString());
+		calculatorA.printMonthlyInformation();
 		
 		EmployeeRecord testCaseB = new EmployeeRecord(LocalDate.of(2008, 6, 1), 10);
 		FileHandler.inputData("src/main/resources/raw_hours.txt", testCaseB);

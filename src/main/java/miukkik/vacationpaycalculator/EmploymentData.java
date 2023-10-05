@@ -7,9 +7,11 @@ public class EmploymentData {
 	private double hours;
 	private double bonus;
 	private double wage;
+	private String info;
 	
-	public EmploymentData(LocalDate date, double hours, double bonus) {
+	public EmploymentData(LocalDate date, String info, double hours, double bonus) {
 		this.date = date;
+		this.info = info;
 		this.hours = hours;
 		this.bonus = bonus;
 	}
@@ -18,20 +20,16 @@ public class EmploymentData {
 		return date;
 	}
 
+	public String getInfo() {
+		return info;
+	}
+	
 	public double getHours() {
 		return hours;
 	}
 
-	public void setHours(double hours) {
-		this.hours = hours;
-	}
-
 	public double getBonus() {
 		return bonus;
-	}
-	
-	public void setBonus(double bonus) {
-		this.bonus = bonus;
 	}
 	
 	public double getWage() {

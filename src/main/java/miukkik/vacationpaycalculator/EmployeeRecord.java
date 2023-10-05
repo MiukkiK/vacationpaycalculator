@@ -21,7 +21,7 @@ public class EmployeeRecord implements EmploymentDataInterface{
 	public boolean isSalaried() {
 		return salariedStatus;
 	}
-
+	
 	public void setSalariedStatus(boolean salariedStatus) {
 		this.salariedStatus = salariedStatus;
 	}
@@ -41,14 +41,6 @@ public class EmployeeRecord implements EmploymentDataInterface{
 		data.setWage(currentWage);
 		record.add(data);
 	}
-	
-	public void mergeData(EmploymentData data) {
-		EmploymentData previousRecord = record.get(record.size()-1); 
-		if(previousRecord.getDate().isEqual(data.getDate())) {
-			previousRecord.setHours(previousRecord.getHours() + data.getHours());
-			previousRecord.setBonus(previousRecord.getBonus() + data.getBonus());
-		}
-	}	
 	
 	public ArrayList<EmploymentData> getRecord() {
 		return record;
