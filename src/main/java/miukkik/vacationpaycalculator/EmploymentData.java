@@ -7,6 +7,7 @@ public class EmploymentData {
 	private double hours;
 	private double bonus;
 	private double wage;
+	private double workHours;
 	private String info;
 	
 	public EmploymentData(LocalDate date, String info, double hours, double bonus) {
@@ -35,11 +36,19 @@ public class EmploymentData {
 	public double getWage() {
 		return wage;
 	}
-
+	
 	public void setWage(double wage) {
 		this.wage = wage;
 	}
+	
+	public double getWorkHours() {
+		return workHours;
+	}
 
+	public void setWorkHours(double workHours) {
+		this.workHours = workHours;
+	}
+	
 	@Override
 	public String toString() {
 		return "EmploymentData [date=" + date + ", hours=" + hours + ", bonus=" + bonus + "]";

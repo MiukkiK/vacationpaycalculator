@@ -8,6 +8,7 @@ public class EmployeeRecord implements EmploymentDataInterface{
 	private boolean salariedStatus;
 	private LocalDate startDate;
 	private double currentWage;
+	private double currentWorkHours;
 	private ArrayList<EmploymentData> record;
 	
 	
@@ -15,6 +16,7 @@ public class EmployeeRecord implements EmploymentDataInterface{
 		salariedStatus = false;
 		this.startDate = startDate;
 		currentWage = startWage;
+		currentWorkHours = 0;
 		record = new ArrayList<EmploymentData>();
 	}
 	
@@ -30,6 +32,12 @@ public class EmployeeRecord implements EmploymentDataInterface{
 		return startDate;
 	}
 	
+	public void setWorkHoursFrom(LocalDate changeDate, double newWorkHours) {
+		for (EmploymentData data : record) {
+			if(!data.getDate().isBefore(changeDate)) data.setWorkHours(newWorkHours);
+		}
+	}
+	
 	public void setWageFrom(LocalDate changeDate, double newWage) {
 		for (EmploymentData data : record) {
 			if(!data.getDate().isBefore(changeDate)) data.setWage(newWage);
@@ -39,6 +47,7 @@ public class EmployeeRecord implements EmploymentDataInterface{
 	
 	public void add(EmploymentData data) {
 		data.setWage(currentWage);
+		data.setWorkHours(currentWorkHours);
 		record.add(data);
 	}
 	

@@ -10,14 +10,17 @@ public class RunVacationPayCalculator {
 		testCaseA.setWageFrom(LocalDate.of(2009, 10, 15), 11);
 
 		VacationPayCalculator calculatorA = new VacationPayCalculator(testCaseA, 2010);
-		calculatorA.printMonthlyInformation();
+		//calculatorA.printMonthlyInformation(); // for checking monthly totals of calculated data
+		System.out.println(calculatorA.toString());
 		
 		EmployeeRecord testCaseB = new EmployeeRecord(LocalDate.of(2008, 6, 1), 10);
 		FileHandler.inputData("src/main/resources/raw_hours.txt", testCaseB);
 		testCaseB.setSalariedStatus(true);
+		testCaseB.setWorkHoursFrom(LocalDate.MIN, 37.5);
 		testCaseB.setWageFrom(LocalDate.of(2009, 10, 15), 11);
 		
 		VacationPayCalculator calculatorB = new VacationPayCalculator(testCaseB, 2010);
+		//calculatorB.printMonthlyInformation(); // for checking monthly totals of calculated data
 		System.out.println(calculatorB.toString());
 	}
 }
