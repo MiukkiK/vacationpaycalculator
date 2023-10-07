@@ -3,20 +3,38 @@ package miukkik.vacationpaycalculator;
 import java.time.LocalDate;
 
 public class Rules {
-	//
-	private static double firstYearPercent = 10;
-	private static double defaultPercent = 12.5;
+	/*
+	 * PAM Kaupan alan TES: §20 2. 
+	 * Lomaa ansaitaan täydeltä lomanmääräytymiskuukaudelta työsuhteen kestettyä
+	 * lomanmääräytymisvuoden (1.4.–31.3.) loppuun mennessä:
+	 * alle vuoden: 2 arkipäivää
+	 * vähintään vuoden: 2,5 arkipäivää.
+	 */
+	private static int cutOffMonth = 3;
+	private static int cutOffDay = 31;
 	
 	private static double firstYearVacationDays = 2;
 	private static double defaultVacationDays = 2.5;
 	
-	//
-	private static int cutOffMonth = 3;
-	private static int cutOffDay = 31;
-	
+	/**
+	 * PAM Kaupan alan TES: §20 2.
+	 * Täysi lomanmääräytymiskuukausi on kalenterikuukausi, jonka aikana työntekijä on työskennellyt:
+	 * vähintään 14 päivää
+	 * vähintään 35 tuntia.
+	 */
 	private static int vacationDayRquirement = 14;
 	private static double vacationHourRequirement = 35;
 	
+	/**
+	 * PAM Kaupan alan TES: §20 7.
+	 * Lomapalkkaan ja -korvaukseen lisätään lomanmääräytymisvuoden aikana maksetuista lisistä:
+	 * 10 % työsuhteen kestettyä lomanmääräytymisvuoden loppuun (31.3.) mennessä alle 1 vuoden
+	 * 12,5 % työsuhteen kestettyä lomanmääräytymisvuoden loppuun (31.3.) mennessä vähintään 1 vuoden.
+	 */
+	
+	private static double firstYearPercent = 10;
+	private static double defaultPercent = 12.5;
+		
 	public static double getPercentileMultiplier(LocalDate startDate, LocalDate cutOffDate) {
 		if (startDate.isBefore(cutOffDate.minusYears(1))) return defaultPercent / 100;
 		else return firstYearPercent / 100;
@@ -39,6 +57,15 @@ public class Rules {
 		return LocalDate.of(year, cutOffMonth, cutOffDay);
 	}
 
+	/**
+	 * Vuosilomalaki 18.3.2005/162 §11
+	 * Muun kuin viikko- tai kuukausipalkalla työskentelevän sellaisen työntekijän vuosilomapalkka, 
+	 * joka sopimuksen mukaan työskentelee vähintään 14 päivänä kalenterikuukaudessa, lasketaan kertomalla
+	 * hänen keskipäiväpalkkansa lomapäivien määrän perusteella määräytyvällä kertoimella:
+	 * 
+	 * @param amount of vacation days
+	 * @return corresponding vacation pay multiplier
+	 */
 	public static double getVacationPayMultiplier(int vacationDays) {
 		double multiplier;
 		switch (vacationDays) {
@@ -134,10 +161,4 @@ public class Rules {
 		}
 		return multiplier;
 	}
-	
-	@Override
-	public String toString() {
-		return "Rules: First Year Percent = " + firstYearPercent + ", Default Percent = " + defaultPercent + "]";
-	}
-
 }

@@ -9,14 +9,17 @@ public class EmployeeRecord implements EmploymentDataInterface{
 	private LocalDate startDate;
 	private double currentWage;
 	private double currentWorkHours;
+//	private ChangeList wages;
+//	private ChangeList workHours;
 	private ArrayList<EmploymentData> record;
 	
-	
-	public EmployeeRecord(LocalDate startDate, double startWage) {
+	public EmployeeRecord(LocalDate startDate, double startWage) {		
 		salariedStatus = false;
 		this.startDate = startDate;
-		currentWage = startWage;
+		currentWage = startWage; 
 		currentWorkHours = 0;
+//		wages = new ChangeList(startWage);
+//		workHours = new ChangeList(0);
 		record = new ArrayList<EmploymentData>();
 	}
 	
@@ -36,6 +39,8 @@ public class EmployeeRecord implements EmploymentDataInterface{
 		for (EmploymentData data : record) {
 			if(!data.getDate().isBefore(changeDate)) data.setWorkHours(newWorkHours);
 		}
+		currentWorkHours = newWorkHours;
+//		workHours.addChange(newWorkHours, changeDate);
 	}
 	
 	public void setWageFrom(LocalDate changeDate, double newWage) {
@@ -43,12 +48,14 @@ public class EmployeeRecord implements EmploymentDataInterface{
 			if(!data.getDate().isBefore(changeDate)) data.setWage(newWage);
 		}
 		currentWage = newWage;
+//		wages.addChange(newWage, changeDate);
 	}
 	
 	public void add(EmploymentData data) {
 		data.setWage(currentWage);
 		data.setWorkHours(currentWorkHours);
 		record.add(data);
+		
 	}
 	
 	public ArrayList<EmploymentData> getRecord() {
@@ -70,12 +77,5 @@ public class EmployeeRecord implements EmploymentDataInterface{
 			}
 		}
 		return record.subList(startIndex, endIndex);
-	}
-	
-	@Override
-	public String toString() {
-		return "EmployeeRecord [salariedStatus=" + salariedStatus + ", startDate=" + startDate + ", record size=" + record.size()
-				+ "]";
-	}
-	
+	}	
 }

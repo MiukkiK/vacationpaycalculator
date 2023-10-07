@@ -1,18 +1,16 @@
 package miukkik.vacationpaycalculator;
 
-import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 
 public class VacationPayCalculator {
-	private final EmployeeRecord record;
 	private final double[] monthlyHours = new double[12];
 	private final int[] monthlyDays = new int[12];
 	private final int[] monthlyLeave = new int[12];
 	private final double[] monthlyPay = new double[12];
 
-	 private int vacationDays;
+	private int vacationDays;
 
 	private int category;
 	//category 1 fields
@@ -34,10 +32,8 @@ public class VacationPayCalculator {
 	private double percentileMultiplier;
 	private double percentileVacationPay;
 
-	
-	public VacationPayCalculator (EmployeeRecord record, int year) {
 
-		this.record = record;
+	public VacationPayCalculator (EmployeeRecord record, int year) {
 
 		final LocalDate cutOffDate = Rules.getCutOffDate(year);
 		List<EmploymentData> filteredList = record.getRecordBetween(cutOffDate.minusYears(1), cutOffDate);
@@ -47,12 +43,25 @@ public class VacationPayCalculator {
 		for(EmploymentData data : filteredList) {
 
 			int monthIndex = data.getDate().getMonthValue() - 1;
-
+			/**
+			 * Vuosilomalaki §7
+			 * Työssäolon veroisena pidetään työstä poissaoloaikaa, jolta työnantaja on lain mukaan velvollinen maksamaan työntekijälle palkan.
+			 *
+			 * PAM Kaupan alan TES, §20 10.
+			 * 10. Maksettuun palkkaan lisätään laskennallista palkkaa:
+			 * ...
+			 * raskaus- ja vanhempainvapaan vuosilomaa kerryttävältä ajalta
+			 * tilapäisen hoitovapaan ajalta (työsopimuslain 4:6 §)
+			 */
 			if (!data.getInfo().equals("")) { // days with info are not added as regular workdays or add to vacation total hour count. (weekday holiday bonus)
 				if (data.getHours() == 0) monthlyLeave[monthIndex]++; // days with info and no hours are treated as valid leave days, limited leave such as sick leave not implememnted yet.
 			} else  {
 				monthlyDays[monthIndex]++;
 				monthlyHours[monthIndex] += data.getHours();
+				/**
+				 * PAM Kaupan alan TES: §20 6.
+				 * Lomapalkka provision osalta lasketaan vuosilomalain mukaan.
+				 */
 				monthlyPay[monthIndex] += (data.getHours()*data.getWage()) + data.getBonus();
 			}
 		}
@@ -66,21 +75,34 @@ public class VacationPayCalculator {
 			}
 		}
 		tempVacationDays *= Rules.getVacationDayMultiplier(record.getStartDate(), cutOffDate);
+		/**
+		 * Vuosilomalaki §5
+		 * Loman pituutta laskettaessa päivän osa pyöristetään täyteen lomapäivään.
+		 */
 		vacationDays = (int)Math.round(tempVacationDays);
 
 		// vacation day based pay calculation
 
 		if (vacationDays != 0) {
+			/**
+			 * PAM Kaupan alan TES, §20 6.
+			 * Jos työntekijän työaika ja vastaavasti palkka on muuttunut lomanmääräytymisvuoden aikana
+			 * ja hän on kuukausipalkkainen lomanmääräytymisvuoden lopussa (31.3.), hänen lomapalkkansa 
+			 * lasketaan tämän pykälän 8–11. kohdan mukaan.
+			 */
 			if (record.isSalaried() && (filteredList.get(0).getWage() == filteredList.get(filteredList.size()-1).getWage()) && filteredList.get(0).getWorkHours() == filteredList.get(filteredList.size()-1).getWorkHours()) {
 				category = 1;
+				/** not implemented yet
 				monthlySalary = filteredList.get(0).getWorkHours() * filteredList.get(0).getWage();
 				monthlyWorkDays = 4*5; // workdays per week not implemented in this version, assumed 5 days per week
 				dailyPay = monthlySalary / monthlyWorkDays;
 
 				vacationPay = dailyPay * vacationDays;
+				*/
 			} else {
 				category = 2;
 				totalPay = 0;
+				// TODO salaried employee with category 2
 				for (double thisMonthsPay : monthlyPay) {
 					totalPay += thisMonthsPay;
 				}
@@ -89,10 +111,11 @@ public class VacationPayCalculator {
 					totalDays += thisMonthsDays;
 				}
 				averageDailyPay = totalPay / totalDays;
-				averageWeeklyWorkDays = 5; // workdays per week not implemented in this version, assumed 5 days per week
-				vacationPayMultiplier = Rules.getVacationPayMultiplier(vacationDays);
-				vacationPay = averageDailyPay * (averageWeeklyWorkDays / 5) * Rules.getVacationPayMultiplier(vacationDays);
 			}
+			averageWeeklyWorkDays = 5; // workdays per week not implemented in this version, assumed 5 days per week
+			vacationPayMultiplier = Rules.getVacationPayMultiplier(vacationDays);
+			vacationPay = averageDailyPay * (averageWeeklyWorkDays / 5) * Rules.getVacationPayMultiplier(vacationDays);
+
 		}
 
 		// percentile vacation pay calculation
@@ -103,10 +126,10 @@ public class VacationPayCalculator {
 		}
 		percentileVacationPay = 0;
 		if ((percentilePayTotal != 0) || (totalLeaveDays != 0)) {
-			
+
 			if (category == 1) missedPay = totalLeaveDays * dailyPay; else missedPay = totalLeaveDays * averageDailyPay;
 			percentileMultiplier = Rules.getPercentileMultiplier(record.getStartDate(), cutOffDate);
-			
+
 			percentileVacationPay = (percentilePayTotal + missedPay) * percentileMultiplier;		
 		}
 	}
@@ -134,7 +157,7 @@ public class VacationPayCalculator {
 		if (percentileVacationPay != 0) {
 			resultString += "Kohtaan 4:\n";
 			resultString += percentilePayTotal + " € + " + String.format(Locale.ENGLISH, "%.2f", missedPay) + " € X " + percentileMultiplier*100 + " % " + String.format(Locale.ENGLISH, "%.2f", percentileVacationPay) + " €";
-			}
+		}
 		return resultString;
 	}
 }
