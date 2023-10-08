@@ -9,6 +9,7 @@ public class EmployeeRecord implements EmploymentDataInterface{
 	private LocalDate startDate;
 	private double currentWage;
 	private double currentWorkHours;
+	private double currentWorkDays;
 //	private ChangeList wages;
 //	private ChangeList workHours;
 	private ArrayList<EmploymentData> record;
@@ -18,6 +19,7 @@ public class EmployeeRecord implements EmploymentDataInterface{
 		this.startDate = startDate;
 		currentWage = startWage; 
 		currentWorkHours = 0;
+		currentWorkDays  = 0;
 //		wages = new ChangeList(startWage);
 //		workHours = new ChangeList(0);
 		record = new ArrayList<EmploymentData>();
@@ -35,12 +37,12 @@ public class EmployeeRecord implements EmploymentDataInterface{
 		return startDate;
 	}
 	
-	public void setWorkHoursFrom(LocalDate changeDate, double newWorkHours) {
-		for (EmploymentData data : record) {
-			if(!data.getDate().isBefore(changeDate)) data.setWorkHours(newWorkHours);
-		}
-		currentWorkHours = newWorkHours;
-//		workHours.addChange(newWorkHours, changeDate);
+	public double getCurrentWage() {
+		return currentWage;
+	}
+	
+	public double getWageOn(LocalDate date) {
+		return currentWage; // not implemented
 	}
 	
 	public void setWageFrom(LocalDate changeDate, double newWage) {
@@ -49,6 +51,26 @@ public class EmployeeRecord implements EmploymentDataInterface{
 		}
 		currentWage = newWage;
 //		wages.addChange(newWage, changeDate);
+	}	
+	
+	public double getCurrentWorkHours() {
+		return currentWorkHours;
+	}
+	
+	public void setWorkHoursFrom(LocalDate changeDate, double newWorkHours) {
+		for (EmploymentData data : record) {
+			if(!data.getDate().isBefore(changeDate)) data.setWorkHours(newWorkHours);
+		}
+		currentWorkHours = newWorkHours;
+//		workHours.addChange(newWorkHours, changeDate);
+	}
+	
+	public double getCurrentWorkDays() {
+		return currentWorkDays;
+	}
+	
+	public void setWorkDaysFrom(LocalDate changeDate, double newWorkHours) {
+		// not implemented
 	}
 	
 	public void add(EmploymentData data) {
