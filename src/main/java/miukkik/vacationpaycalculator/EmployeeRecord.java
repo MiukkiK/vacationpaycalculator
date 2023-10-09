@@ -69,8 +69,8 @@ public class EmployeeRecord implements EmploymentDataInterface{
 		return currentWorkDays;
 	}
 	
-	public void setWorkDaysFrom(LocalDate changeDate, double newWorkHours) {
-		// not implemented
+	public void setWorkDaysFrom(LocalDate changeDate, double newWorkDays) {
+		currentWorkDays = newWorkDays;
 	}
 	
 	public void add(EmploymentData data) {

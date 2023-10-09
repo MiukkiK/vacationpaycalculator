@@ -11,7 +11,8 @@ public class RunVacationPayCalculator {
 
 		VacationPayCalculator calculatorA = new VacationPayCalculator(testCaseA, 2010);
 		//calculatorA.printMonthlyInformation(); // for checking monthly totals of calculated data
-		System.out.println(calculatorA.toString());
+		System.out.println("Test case A:");
+		System.out.println(calculatorA.toString() + "\n");
 		
 		EmployeeRecord testCaseB = new EmployeeRecord(LocalDate.of(2008, 6, 1), 10);
 		FileHandler.inputData("src/main/resources/raw_hours.txt", testCaseB);
@@ -21,6 +22,7 @@ public class RunVacationPayCalculator {
 		
 		VacationPayCalculator calculatorB = new VacationPayCalculator(testCaseB, 2010);
 		//calculatorB.printMonthlyInformation(); // for checking monthly totals of calculated data
+		System.out.println("Test case B:");
 		System.out.println(calculatorB.toString());
 	}
 }

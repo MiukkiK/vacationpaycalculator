@@ -12,17 +12,18 @@ public class VacationPayCalculator {
 
 	private int vacationDays;
 
+	private double averageDailyPay;
+	
 	private int category;
 	//category 1 fields
 	private double monthlySalary;
 	private double monthlyWorkDays;
 	private double dailyPay;
 	private double vacationPay;
-
+	
 	//category 2 fields
 	private double totalPay;
 	private int totalDays;
-	private double averageDailyPay;
 	private double averageWeeklyWorkDays;
 	private double vacationPayMultiplier;
 
@@ -53,6 +54,7 @@ public class VacationPayCalculator {
 			 * raskaus- ja vanhempainvapaan vuosilomaa kerryttävältä ajalta
 			 * tilapäisen hoitovapaan ajalta (työsopimuslain 4:6 §)
 			 */
+			
 			if (!data.getInfo().equals("")) { // days with info are not added as regular workdays or add to vacation total hour count. (weekday holiday bonus)
 				if (data.getHours() == 0) monthlyLeave[monthIndex]++; // days with info and no hours are treated as valid leave days, limited leave such as sick leave not implememnted yet.
 			} else  {
@@ -89,7 +91,7 @@ public class VacationPayCalculator {
 			 * työssäolon veroista tuntia.
 			 */
 			if (((record.getCurrentWorkDays()*4 >= Rules.getVacationDaysRequirement()) && ((monthlyDays[i] + monthlyLeave[i]) >= Rules.getVacationDaysRequirement()))
-					|| (record.getCurrentWorkHours()*4 >= Rules.getVacationHoursRequirement()) && (monthlyHours[i]) >= Rules.getVacationHoursRequirement())
+					|| ((record.getCurrentWorkHours()*4 >= Rules.getVacationHoursRequirement()) && (monthlyHours[i]) >= Rules.getVacationHoursRequirement()))
 				tempVacationDays++;
 			else {
 				percentilePayTotal += monthlyPay[i];
@@ -123,7 +125,6 @@ public class VacationPayCalculator {
 				vacationPay = dailyPay * vacationDays;
 			 */
 		} else {
-			System.out.println(vacationDays);
 			if (vacationDays != 0) category = 2;
 				// salaried employee with category 2 not implemented yet	
 				averageWeeklyWorkDays = record.getCurrentWorkDays(); // changing workdays not implemented yet
@@ -156,6 +157,82 @@ public class VacationPayCalculator {
 			System.out.println(months[i] + ": Workdays - " + monthlyDays[i] + ", Leave days - " + monthlyLeave[i] + ", Work hours - " + monthlyHours[i] + ", Monthly pay - " + monthlyPay[i]);
 		}
 		System.out.println("Category is " + category);
+	}
+
+		public double[] getMonthlyHours() {
+		return monthlyHours;
+	}
+
+	public int[] getMonthlyDays() {
+		return monthlyDays;
+	}
+
+	public int[] getMonthlyLeave() {
+		return monthlyLeave;
+	}
+
+	public double[] getMonthlyPay() {
+		return monthlyPay;
+	}
+
+	public int getVacationDays() {
+		return vacationDays;
+	}
+
+	public double getAverageDailyPay() {
+		return averageDailyPay;
+	}
+
+	public int getCategory() {
+		return category;
+	}
+
+	public double getMonthlySalary() {
+		return monthlySalary;
+	}
+
+	public double getMonthlyWorkDays() {
+		return monthlyWorkDays;
+	}
+
+	public double getDailyPay() {
+		return dailyPay;
+	}
+
+	public double getVacationPay() {
+		return vacationPay;
+	}
+
+	public double getTotalPay() {
+		return totalPay;
+	}
+
+	public int getTotalDays() {
+		return totalDays;
+	}
+
+	public double getAverageWeeklyWorkDays() {
+		return averageWeeklyWorkDays;
+	}
+
+	public double getVacationPayMultiplier() {
+		return vacationPayMultiplier;
+	}
+
+	public double getPercentilePayTotal() {
+		return percentilePayTotal;
+	}
+
+	public double getMissedPay() {
+		return missedPay;
+	}
+
+	public double getPercentileMultiplier() {
+		return percentileMultiplier;
+	}
+
+	public double getPercentileVacationPay() {
+		return percentileVacationPay;
 	}
 
 	@Override
