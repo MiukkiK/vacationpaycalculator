@@ -1,16 +1,21 @@
+/**
+ * @author Mia Kallio
+ */
+
 package miukkik.vacationpaycalculator;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class EmploymentData {
 	private LocalDate date;
-	private double hours;
-	private double bonus;
-	private double wage;
-	private double workHours;
+	private BigDecimal hours;
+	private BigDecimal bonus;
+	private BigDecimal wage;
+	private BigDecimal workHours;
 	private String info;
 	
-	public EmploymentData(LocalDate date, String info, double hours, double bonus) {
+	public EmploymentData(LocalDate date, String info, BigDecimal hours, BigDecimal bonus) {
 		this.date = date;
 		this.info = info;
 		this.hours = hours;
@@ -25,27 +30,27 @@ public class EmploymentData {
 		return info;
 	}
 	
-	public double getHours() {
+	public BigDecimal getHours() {
 		return hours;
 	}
 
-	public double getBonus() {
+	public BigDecimal getBonus() {
 		return bonus;
 	}
 	
-	public double getWage() {
+	public BigDecimal getWage() {
 		return wage;
 	}
 	
-	public void setWage(double wage) {
+	public void setWage(BigDecimal wage) {
 		this.wage = wage;
 	}
 	
-	public double getWorkHours() {
+	public BigDecimal getWorkHours() {
 		return workHours;
 	}
 
-	public void setWorkHours(double workHours) {
+	public void setWorkHours(BigDecimal workHours) {
 		this.workHours = workHours;
 	}
 	

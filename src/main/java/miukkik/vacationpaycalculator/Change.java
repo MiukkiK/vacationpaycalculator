@@ -1,12 +1,17 @@
+/**
+ * @author Mia Kallio
+ */
+
 package miukkik.vacationpaycalculator;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class Change {
-	double amount;
+	BigDecimal amount;
 	LocalDate effectiveUntil;
 	
-	public Change (double amount) {
+	public Change (BigDecimal amount) {
 		this.amount = amount; 
 		effectiveUntil = LocalDate.MAX;
 	}

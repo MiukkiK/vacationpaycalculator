@@ -1,3 +1,7 @@
+/**
+ * @author Mia Kallio
+ */
+
 package miukkik.vacationpaycalculator;
 
 import java.time.LocalDate;

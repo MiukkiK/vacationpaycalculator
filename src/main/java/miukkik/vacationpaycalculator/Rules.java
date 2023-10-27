@@ -1,5 +1,10 @@
+/**
+ * @author Mia Kallio
+ */
+
 package miukkik.vacationpaycalculator;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class Rules {
@@ -13,8 +18,8 @@ public class Rules {
 	private static int cutOffMonth = 3;
 	private static int cutOffDay = 31;
 	
-	private static double firstYearVacationDays = 2;
-	private static double defaultVacationDays = 2.5;
+	private static BigDecimal firstYearVacationDays = new BigDecimal(2);
+	private static BigDecimal defaultVacationDays = new BigDecimal(2.5);
 	
 	/**
 	 * PAM Kaupan alan TES: §20 2.
@@ -23,7 +28,7 @@ public class Rules {
 	 * vähintään 35 tuntia.
 	 */
 	private static int vacationDayRquirement = 14;
-	private static double vacationHourRequirement = 35;
+	private static BigDecimal vacationHourRequirement = new BigDecimal(35);
 	
 	/**
 	 * PAM Kaupan alan TES: §20 7.
@@ -32,15 +37,16 @@ public class Rules {
 	 * 12,5 % työsuhteen kestettyä lomanmääräytymisvuoden loppuun (31.3.) mennessä vähintään 1 vuoden.
 	 */
 	
-	private static double firstYearPercent = 10;
-	private static double defaultPercent = 12.5;
+	private static BigDecimal firstYearPercent = new BigDecimal(10);
+	private static BigDecimal defaultPercent = new BigDecimal(12.5);
 		
-	public static double getPercentileMultiplier(LocalDate startDate, LocalDate cutOffDate) {
-		if (startDate.isBefore(cutOffDate.minusYears(1))) return defaultPercent / 100;
-		else return firstYearPercent / 100;
+	public static BigDecimal getPercentileMultiplier(LocalDate startDate, LocalDate cutOffDate) {
+		BigDecimal percent = new BigDecimal(100);
+		if (startDate.isBefore(cutOffDate.minusYears(1))) return defaultPercent.divide(percent);
+		else return firstYearPercent.divide(percent);
 	}
 	
-	public static double getVacationDayMultiplier(LocalDate startDate, LocalDate cutOffDate) {
+	public static BigDecimal getVacationDayMultiplier(LocalDate startDate, LocalDate cutOffDate) {
 		if (startDate.isBefore(cutOffDate.minusYears(1))) return defaultVacationDays;
 		else return firstYearVacationDays;
 	}
@@ -49,7 +55,7 @@ public class Rules {
 		return vacationDayRquirement;
 	}
 
-	public static double getVacationHoursRequirement() {
+	public static BigDecimal getVacationHoursRequirement() {
 		return vacationHourRequirement;
 	}	
 	
@@ -66,7 +72,7 @@ public class Rules {
 	 * @param amount of vacation days
 	 * @return corresponding vacation pay multiplier
 	 */
-	public static double getVacationPayMultiplier(int vacationDays) {
+	public static BigDecimal getVacationPayMultiplier(int vacationDays) {
 		double multiplier;
 		switch (vacationDays) {
 		case 2:
@@ -159,6 +165,6 @@ public class Rules {
 		default:
 			multiplier = 0;
 		}
-		return multiplier;
+		return BigDecimal.valueOf(multiplier);
 	}
 }

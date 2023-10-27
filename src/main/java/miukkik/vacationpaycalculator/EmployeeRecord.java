@@ -1,5 +1,10 @@
+/**
+ * @author Mia Kallio
+ */
+
 package miukkik.vacationpaycalculator;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -7,18 +12,18 @@ import java.util.List;
 public class EmployeeRecord implements EmploymentDataInterface{
 	private boolean salariedStatus;
 	private LocalDate startDate;
-	private double currentWage;
-	private double currentWorkHours;
-	private double currentWorkDays;
+	private BigDecimal currentWage;
+	private BigDecimal currentWorkHours;
+	private int currentWorkDays;
 //	private ChangeList wages;
 //	private ChangeList workHours;
 	private ArrayList<EmploymentData> record;
 	
-	public EmployeeRecord(LocalDate startDate, double startWage) {		
+	public EmployeeRecord(LocalDate startDate, BigDecimal startWage) {		
 		salariedStatus = false;
 		this.startDate = startDate;
 		currentWage = startWage; 
-		currentWorkHours = 0;
+		currentWorkHours = BigDecimal.ZERO;
 		currentWorkDays  = 0;
 //		wages = new ChangeList(startWage);
 //		workHours = new ChangeList(0);
@@ -37,15 +42,15 @@ public class EmployeeRecord implements EmploymentDataInterface{
 		return startDate;
 	}
 	
-	public double getCurrentWage() {
+	public BigDecimal getCurrentWage() {
 		return currentWage;
 	}
 	
-	public double getWageOn(LocalDate date) {
+	public BigDecimal getWageOn(LocalDate date) {
 		return currentWage; // not implemented
 	}
 	
-	public void setWageFrom(LocalDate changeDate, double newWage) {
+	public void setWageFrom(LocalDate changeDate, BigDecimal newWage) {
 		for (EmploymentData data : record) {
 			if(!data.getDate().isBefore(changeDate)) data.setWage(newWage);
 		}
@@ -53,11 +58,11 @@ public class EmployeeRecord implements EmploymentDataInterface{
 //		wages.addChange(newWage, changeDate);
 	}	
 	
-	public double getCurrentWorkHours() {
+	public BigDecimal getCurrentWorkHours() {
 		return currentWorkHours;
 	}
 	
-	public void setWorkHoursFrom(LocalDate changeDate, double newWorkHours) {
+	public void setWorkHoursFrom(LocalDate changeDate, BigDecimal newWorkHours) {
 		for (EmploymentData data : record) {
 			if(!data.getDate().isBefore(changeDate)) data.setWorkHours(newWorkHours);
 		}
@@ -65,11 +70,11 @@ public class EmployeeRecord implements EmploymentDataInterface{
 //		workHours.addChange(newWorkHours, changeDate);
 	}
 	
-	public double getCurrentWorkDays() {
+	public int getCurrentWorkDays() {
 		return currentWorkDays;
 	}
 	
-	public void setWorkDaysFrom(LocalDate changeDate, double newWorkDays) {
+	public void setWorkDaysFrom(LocalDate changeDate, int newWorkDays) {
 		currentWorkDays = newWorkDays;
 	}
 	
