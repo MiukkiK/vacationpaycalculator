@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import junit.framework.TestCase;
 
 public class VacationPayCalculatorTest extends TestCase {
-
+	
 	public void testBasicVacationPay() {
 		EmployeeRecord record = new EmployeeRecord(LocalDate.of(2000, 1, 1), new BigDecimal(10));
 		record.setWorkHoursFrom(record.getStartDate(), new BigDecimal(35));

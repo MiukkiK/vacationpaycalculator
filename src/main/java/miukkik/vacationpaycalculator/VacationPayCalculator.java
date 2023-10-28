@@ -117,7 +117,7 @@ public class VacationPayCalculator {
 		 * Vuosilomalaki §5
 		 * Loman pituutta laskettaessa päivän osa pyöristetään täyteen lomapäivään.
 		 */
-		tempVacationDays = tempVacationDays.round(new MathContext(tempVacationDays.precision()-1, RoundingMode.CEILING));
+		tempVacationDays = tempVacationDays.round(new MathContext(tempVacationDays.precision() - tempVacationDays.scale(), RoundingMode.CEILING));
 		vacationDays = tempVacationDays.intValue();
 		
 		// Average pay per day if not salaried
