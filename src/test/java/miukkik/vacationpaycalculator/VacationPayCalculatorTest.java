@@ -9,7 +9,7 @@ public class VacationPayCalculatorTest extends TestCase {
 	
 	public void testBasicVacationPay() {
 		EmployeeRecord record = new EmployeeRecord(LocalDate.of(2000, 1, 1), new BigDecimal(10));
-		record.setWorkHoursFrom(record.getStartDate(), new BigDecimal(35));
+		record.setWorkHours(record.getStartDate(), new BigDecimal(35));
 		
 		record.add(new EmploymentData(LocalDate.of(2000, 1, 2), "", new BigDecimal(8), BigDecimal.ZERO));
 		record.add(new EmploymentData(LocalDate.of(2000, 1, 3), "", new BigDecimal(8), BigDecimal.ZERO));
@@ -27,7 +27,7 @@ public class VacationPayCalculatorTest extends TestCase {
 
 	public void testNotEnoughWorkHours() {
 		EmployeeRecord record = new EmployeeRecord(LocalDate.of(2000, 1, 1), new BigDecimal(10));
-		record.setWorkHoursFrom(record.getStartDate(), new BigDecimal(8));
+		record.setWorkHours(record.getStartDate(), new BigDecimal(8));
 		
 		record.add(new EmploymentData(LocalDate.of(2000, 1, 2), "", new BigDecimal(8), BigDecimal.ZERO));
 		record.add(new EmploymentData(LocalDate.of(2000, 1, 3), "", new BigDecimal(8), BigDecimal.ZERO));
@@ -44,7 +44,7 @@ public class VacationPayCalculatorTest extends TestCase {
 
 	public void testNotEnoughActualHours() {
 		EmployeeRecord record = new EmployeeRecord(LocalDate.of(2000, 1, 1), new BigDecimal(10));
-		record.setWorkHoursFrom(record.getStartDate(), new BigDecimal(35));
+		record.setWorkHours(record.getStartDate(), new BigDecimal(35));
 		
 		record.add(new EmploymentData(LocalDate.of(2000, 1, 2), "", new BigDecimal(8), BigDecimal.ZERO));
 		record.add(new EmploymentData(LocalDate.of(2000, 1, 3), "", new BigDecimal(8), BigDecimal.ZERO));
@@ -59,7 +59,7 @@ public class VacationPayCalculatorTest extends TestCase {
 	
 	public void testNotEnoughWorkDays() {
 		EmployeeRecord record = new EmployeeRecord(LocalDate.of(2000, 1, 1), new BigDecimal(10));
-		record.setWorkDaysFrom(record.getStartDate(), 3);
+		record.setWorkDays(record.getStartDate(), new BigDecimal(3));
 		
 		record.add(new EmploymentData(LocalDate.of(2000, 1, 2), "", new BigDecimal(8), BigDecimal.ZERO));
 		record.add(new EmploymentData(LocalDate.of(2000, 1, 3), "", new BigDecimal(8), BigDecimal.ZERO));
@@ -87,7 +87,7 @@ public class VacationPayCalculatorTest extends TestCase {
 	
 	public void testNotEnoughActualDays() {
 		EmployeeRecord record = new EmployeeRecord(LocalDate.of(2000, 1, 1), new BigDecimal(10));
-		record.setWorkDaysFrom(record.getStartDate(), 4);
+		record.setWorkDays(record.getStartDate(), new BigDecimal(4));
 		
 		record.add(new EmploymentData(LocalDate.of(2000, 1, 2), "", new BigDecimal(8), BigDecimal.ZERO));
 		record.add(new EmploymentData(LocalDate.of(2000, 1, 3), "", new BigDecimal(8), BigDecimal.ZERO));
@@ -110,7 +110,7 @@ public class VacationPayCalculatorTest extends TestCase {
 	
 	public void testWorkDaysWithPaidLeave() {
 		EmployeeRecord record = new EmployeeRecord(LocalDate.of(2000, 1, 1), new BigDecimal(10));
-		record.setWorkDaysFrom(record.getStartDate(), 4);
+		record.setWorkDays(record.getStartDate(), new BigDecimal(4));
 		
 		record.add(new EmploymentData(LocalDate.of(2000, 1, 2), "", new BigDecimal(8), BigDecimal.ZERO));
 		record.add(new EmploymentData(LocalDate.of(2000, 1, 3), "", new BigDecimal(8), BigDecimal.ZERO));
@@ -132,13 +132,13 @@ public class VacationPayCalculatorTest extends TestCase {
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2000);
 
 		assertEquals("Category does not match", 2, calculator.getCategory());
-		assertEquals("Vacation pay does not match", 0, calculator.getVacationPay().compareTo(new BigDecimal("115.2")));
+		assertEquals("Vacation pay does not match", 0, calculator.getVacationPay().compareTo(new BigDecimal("144")));
 		assertEquals("Percentile pay does not match", 0, calculator.getPercentileVacationPay().compareTo(new BigDecimal(32)));
 	}
 	
 	public void testNonintegerVacationDays() {
 		EmployeeRecord record = new EmployeeRecord(LocalDate.of(2000, 1, 1), new BigDecimal(10));
-		record.setWorkHoursFrom(record.getStartDate(), new BigDecimal(35));
+		record.setWorkHours(record.getStartDate(), new BigDecimal(35));
 		
 		record.add(new EmploymentData(LocalDate.of(2001, 1, 2), "", new BigDecimal(8), BigDecimal.ZERO));
 		record.add(new EmploymentData(LocalDate.of(2001, 1, 3), "", new BigDecimal(8), BigDecimal.ZERO));

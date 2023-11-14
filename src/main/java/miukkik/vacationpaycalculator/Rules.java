@@ -27,7 +27,7 @@ public class Rules {
 	 * vähintään 14 päivää
 	 * vähintään 35 tuntia.
 	 */
-	private static int vacationDayRquirement = 14;
+	private static BigDecimal vacationDayRquirement = new BigDecimal(14);
 	private static BigDecimal vacationHourRequirement = new BigDecimal(35);
 	
 	/**
@@ -51,7 +51,7 @@ public class Rules {
 		else return firstYearVacationDays;
 	}
 	
-	public static int getVacationDaysRequirement() {
+	public static BigDecimal getVacationDaysRequirement() {
 		return vacationDayRquirement;
 	}
 

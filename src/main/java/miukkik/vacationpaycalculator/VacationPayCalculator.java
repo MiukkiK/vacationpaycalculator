@@ -12,25 +12,28 @@ import java.util.List;
 import java.util.Locale;
 
 public class VacationPayCalculator {
+	private final BigDecimal[] plannedDays = new BigDecimal[12];
+	private final BigDecimal[] plannedHours = new BigDecimal[12];
+
 	private final BigDecimal[] monthlyHours = new BigDecimal[12];
-	private final int[] monthlyDays = new int[12];
-	private final int[] monthlyLeave = new int[12];
+	private final BigDecimal[] monthlyDays = new BigDecimal[12];
+	private final BigDecimal[] monthlyLeave = new BigDecimal[12];
 	private final BigDecimal[] monthlyPay = new BigDecimal[12];
 
 	private int vacationDays;
 
 	private BigDecimal averageDailyPay;
-	
+
 	private int category;
 	//category 1 fields
 	private BigDecimal monthlySalary;
 	private BigDecimal monthlyWorkDays;
 	private BigDecimal dailyPay;
 	private BigDecimal vacationPay;
-	
+
 	//category 2 fields
 	private BigDecimal totalPay;
-	private int totalDays;
+	private BigDecimal totalDays;
 	private BigDecimal averageWeeklyWorkDays;
 	private BigDecimal vacationPayMultiplier;
 
@@ -43,14 +46,40 @@ public class VacationPayCalculator {
 
 	public VacationPayCalculator (EmployeeRecord record, int year) {
 
-		final LocalDate cutOffDate = Rules.getCutOffDate(year);
-		List<EmploymentData> filteredList = record.getRecordBetween(cutOffDate.minusYears(1), cutOffDate);
+		final LocalDate endDate = Rules.getCutOffDate(year);
+		final LocalDate startDate = endDate.minusYears(1).plusDays(1); 
+
+		if (record.hasDaysChanged(startDate, endDate)) {
+			// go through changes
+		} else {
+			BigDecimal unchangedDays = record.getWorkDays(endDate).multiply(new BigDecimal(4));
+			for (int i=0; i < 12; i++) {
+				plannedDays[i] = unchangedDays;
+			}
+		}
+
+		if (record.hasHoursChanged(startDate, endDate)) {
+			// go through changes
+		} else {
+			BigDecimal unchangedHours = record.getWorkHours(endDate).multiply(new BigDecimal(4));
+			for (int i=0; i < 12; i++) {
+				plannedHours[i] = unchangedHours;
+			}
+		}
+
 
 		// data processing to monthly totals
-		
-		for(EmploymentData data : filteredList) {
 
+		List<EmploymentData> filteredList = record.getRecordBetween(startDate, endDate);
+		for(EmploymentData data : filteredList) {
 			int monthIndex = data.getDate().getMonthValue() - 1;
+
+			if (record.isSalaried() && record.hasDaysChanged(startDate, endDate)) {
+				for (LocalDate dateIterator = startDate; dateIterator.isEqual(endDate); dateIterator.plusDays(1)) {
+					// TODO Not implemented yet
+				}
+			}
+
 			/**
 			 * Vuosilomalaki §7
 			 * Työssäolon veroisena pidetään työstä poissaoloaikaa, jolta työnantaja on lain mukaan velvollinen maksamaan työntekijälle palkan.
@@ -61,11 +90,12 @@ public class VacationPayCalculator {
 			 * raskaus- ja vanhempainvapaan vuosilomaa kerryttävältä ajalta
 			 * tilapäisen hoitovapaan ajalta (työsopimuslain 4:6 §)
 			 */
-
 			if (!data.getInfo().equals("")) { // days with info are not added as regular workdays or add to vacation total hour count. (weekday holiday bonus)
-				if (data.getHours() == BigDecimal.ZERO) monthlyLeave[monthIndex]++; // days with info and no hours are treated as valid leave days, limited leave such as sick leave not implememnted yet.
-			} else  {		
-				monthlyDays[monthIndex]++;
+				if (monthlyLeave[monthIndex] == null) monthlyLeave[monthIndex] = BigDecimal.ZERO;
+				if (data.getHours() == BigDecimal.ZERO) monthlyLeave[monthIndex] = monthlyLeave[monthIndex].add(BigDecimal.ONE); // days with info and no hours are treated as valid leave days, limited leave such as sick leave not implememnted yet.
+			} else  {	
+				if (monthlyDays[monthIndex] == null) monthlyDays[monthIndex] = BigDecimal.ZERO;
+				monthlyDays[monthIndex] = monthlyDays[monthIndex].add(BigDecimal.ONE);
 				if (monthlyHours[monthIndex] == null) monthlyHours[monthIndex] = BigDecimal.ZERO;
 				monthlyHours[monthIndex] = monthlyHours[monthIndex].add(data.getHours());
 				/**
@@ -77,23 +107,25 @@ public class VacationPayCalculator {
 			}
 		}
 
-		
 		totalPay = BigDecimal.ZERO;
 		for (BigDecimal thisMonthsPay : monthlyPay) {
 			if (thisMonthsPay != null) totalPay = totalPay.add(thisMonthsPay);
 		}
-		totalDays = 0;
-		for (int thisMonthsDays : monthlyDays) {
-			totalDays += thisMonthsDays;
+		totalDays = BigDecimal.ZERO;
+		for (BigDecimal thisMonthsDays : monthlyDays) {
+			if (thisMonthsDays != null) totalDays = totalDays.add(thisMonthsDays);
 		}
-		averageDailyPay = totalPay.divide(new BigDecimal(totalDays), 3, RoundingMode.HALF_UP);
+		averageDailyPay = totalPay.divide(totalDays, 3, RoundingMode.HALF_UP);
+
 		// vacation day calculation
+
 		BigDecimal tempVacationDays = BigDecimal.ZERO;
 		percentilePayTotal = BigDecimal.ZERO;
 		for (int i = 0; i < 12; i++) {
 			if (monthlyHours[i] == null) monthlyHours[i] = BigDecimal.ZERO;
-			if (monthlyPay[i] == null) monthlyPay[i] = BigDecimal.ZERO;
-						
+			if (monthlyPay[i] == null) monthlyPay[i] = BigDecimal.ZERO;		
+			if (monthlyDays[i] == null) monthlyDays[i] = BigDecimal.ZERO;
+			if (monthlyLeave[i] == null) monthlyLeave[i] = BigDecimal.ZERO;
 			/**
 			 * Vuosilomalaki 18.3.2005/162: §6
 			 * Jos työntekijä on sopimuksen mukaisesti työssä niin harvoina päivinä,
@@ -103,15 +135,18 @@ public class VacationPayCalculator {
 			 * aikana työntekijälle on kertynyt vähintään 35 työtuntia tai 7 §:ssä tarkoitettua 
 			 * työssäolon veroista tuntia.
 			 */
-			if (((record.getCurrentWorkDays()*4 >= Rules.getVacationDaysRequirement()) && ((monthlyDays[i] + monthlyLeave[i]) >= Rules.getVacationDaysRequirement()))
-					|| ((record.getCurrentWorkHours().compareTo(Rules.getVacationHoursRequirement()) != -1) && (monthlyHours[i].compareTo(Rules.getVacationHoursRequirement()) != -1)))
+			if ((plannedDays[i].compareTo(Rules.getVacationDaysRequirement()) != -1) && (monthlyDays[i].add(monthlyLeave[i]).compareTo(Rules.getVacationDaysRequirement()) != -1)) {
 				tempVacationDays = tempVacationDays.add(BigDecimal.ONE);
+			}
+			else if ((plannedHours[i].compareTo(Rules.getVacationHoursRequirement()) != -1) && (monthlyHours[i].compareTo(Rules.getVacationHoursRequirement()) != -1)) {
+				tempVacationDays = tempVacationDays.add(BigDecimal.ONE);
+			}
 			else {
 				percentilePayTotal = percentilePayTotal.add(monthlyPay[i]);
 				totalPay = totalPay.subtract(monthlyPay[i]);
 			}
 		}
-		tempVacationDays = tempVacationDays.multiply(Rules.getVacationDayMultiplier(record.getStartDate(), cutOffDate));
+		tempVacationDays = tempVacationDays.multiply(Rules.getVacationDayMultiplier(record.getStartDate(), endDate));
 
 		/**
 		 * Vuosilomalaki §5
@@ -119,9 +154,8 @@ public class VacationPayCalculator {
 		 */
 		tempVacationDays = tempVacationDays.round(new MathContext(tempVacationDays.precision() - tempVacationDays.scale(), RoundingMode.CEILING));
 		vacationDays = tempVacationDays.intValue();
-		
-		// Average pay per day if not salaried
-		
+
+
 		// vacation day based pay calculation
 
 		/**
@@ -130,41 +164,44 @@ public class VacationPayCalculator {
 		 * ja hän on kuukausipalkkainen lomanmääräytymisvuoden lopussa (31.3.), hänen lomapalkkansa 
 		 * lasketaan tämän pykälän 8–11. kohdan mukaan.
 		 */
-		if (record.isSalaried() && (filteredList.get(0).getWage() == filteredList.get(filteredList.size()-1).getWage()) && filteredList.get(0).getWorkHours() == filteredList.get(filteredList.size()-1).getWorkHours()) {
-			if (vacationDays != 0) category = 1;
-			/** not implemented yet
-				monthlySalary = filteredList.get(0).getWorkHours() * filteredList.get(0).getWage();
-				monthlyWorkDays = 4*5; // workdays per week not implemented in this version, assumed 5 days per week
-				dailyPay = monthlySalary / monthlyWorkDays;
+		if (record.isSalaried() && !(record.hasDaysChanged(startDate, endDate))) {
+			if (vacationDays != 0) {
+				category = 1;
+				monthlySalary = record.getSalary(endDate);
+				monthlyWorkDays = record.getWorkDays(endDate).multiply(new BigDecimal(4));
+				dailyPay = monthlySalary.divide(monthlyWorkDays);
 
-				vacationPay = dailyPay * vacationDays;
-			 */
+				vacationPay = dailyPay.multiply(new BigDecimal(vacationDays));
+			}
 		} else {
 			if (vacationDays != 0) category = 2;
-				// salaried employee with category 2 not implemented yet	
-				averageWeeklyWorkDays = new BigDecimal(record.getCurrentWorkDays()); // changing workdays not implemented yet
-				vacationPayMultiplier = Rules.getVacationPayMultiplier(vacationDays);
-				if (averageWeeklyWorkDays.compareTo(BigDecimal.ZERO) == 0 ) vacationPay = averageDailyPay.multiply(vacationPayMultiplier);
-				else vacationPay = averageDailyPay.multiply(averageWeeklyWorkDays.divide(new BigDecimal(5)).multiply(vacationPayMultiplier));
+			vacationPayMultiplier = Rules.getVacationPayMultiplier(vacationDays);
+			vacationPay = averageDailyPay.multiply(vacationPayMultiplier);
+			/**
+			TODO Not implemented yet
+			if (record.isSalaried() == true) {
+				averageWeeklyWorkDays = new BigDecimal(totalDays).divide(new BigDecimal(12));
+				vacationPay = vacationPay.multiply(averageWeeklyWorkDays.divide(new BigDecimal(5)));
+			}
+			 */
 		}
 
 		// percentile vacation pay calculation
 
 		BigDecimal totalLeaveDays = BigDecimal.ZERO;
-		for (int leaveThisMonth : monthlyLeave) {
-			totalLeaveDays = totalLeaveDays.add(new BigDecimal(leaveThisMonth));
+		for (BigDecimal leaveThisMonth : monthlyLeave) {
+			totalLeaveDays = totalLeaveDays.add(leaveThisMonth);
 		}
 		percentileVacationPay = BigDecimal.ZERO;
 		if ((percentilePayTotal != BigDecimal.ZERO) || (totalLeaveDays != BigDecimal.ZERO)) {
 
-			if (category == 1) missedPay = totalLeaveDays.multiply(dailyPay); else missedPay = totalLeaveDays.multiply(averageDailyPay);
-			
-			percentileMultiplier = Rules.getPercentileMultiplier(record.getStartDate(), cutOffDate);
-			percentileVacationPay = (percentilePayTotal.add(missedPay)).multiply(percentileMultiplier);		
+			if (category == 1) missedPay = totalLeaveDays.multiply(dailyPay); 
+			else missedPay = totalLeaveDays.multiply(averageDailyPay);
+
+			percentileMultiplier = Rules.getPercentileMultiplier(record.getStartDate(), endDate);
+			percentileVacationPay = percentilePayTotal.add(missedPay).multiply(percentileMultiplier);		
 		}
 	}
-
-
 
 	public void printMonthlyInformation() {
 		String[] months = new String[] {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
@@ -178,11 +215,11 @@ public class VacationPayCalculator {
 		return monthlyHours;
 	}
 
-	public int[] getMonthlyDays() {
+	public BigDecimal[] getMonthlyDays() {
 		return monthlyDays;
 	}
 
-	public int[] getMonthlyLeave() {
+	public BigDecimal[] getMonthlyLeave() {
 		return monthlyLeave;
 	}
 
@@ -222,7 +259,7 @@ public class VacationPayCalculator {
 		return totalPay;
 	}
 
-	public int getTotalDays() {
+	public BigDecimal getTotalDays() {
 		return totalDays;
 	}
 

@@ -12,7 +12,6 @@ public class EmploymentData {
 	private BigDecimal hours;
 	private BigDecimal bonus;
 	private BigDecimal wage;
-	private BigDecimal workHours;
 	private String info;
 	
 	public EmploymentData(LocalDate date, String info, BigDecimal hours, BigDecimal bonus) {
@@ -44,14 +43,6 @@ public class EmploymentData {
 	
 	public void setWage(BigDecimal wage) {
 		this.wage = wage;
-	}
-	
-	public BigDecimal getWorkHours() {
-		return workHours;
-	}
-
-	public void setWorkHours(BigDecimal workHours) {
-		this.workHours = workHours;
 	}
 	
 	@Override

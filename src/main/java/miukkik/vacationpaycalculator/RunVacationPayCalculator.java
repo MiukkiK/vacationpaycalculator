@@ -22,7 +22,7 @@ public class RunVacationPayCalculator {
 		EmployeeRecord testCaseB = new EmployeeRecord(LocalDate.of(2008, 6, 1), new BigDecimal(10));
 		FileHandler.inputData("src/main/resources/raw_hours.txt", testCaseB);
 		testCaseB.setSalariedStatus(true);
-		testCaseB.setWorkHoursFrom(LocalDate.MIN, new BigDecimal(37.5));
+		testCaseB.setWorkHours(LocalDate.MIN, new BigDecimal(37.5));
 		testCaseB.setWageFrom(LocalDate.of(2009, 10, 15), new BigDecimal(11));
 		
 		VacationPayCalculator calculatorB = new VacationPayCalculator(testCaseB, 2010);

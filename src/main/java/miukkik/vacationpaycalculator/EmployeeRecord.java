@@ -13,20 +13,20 @@ public class EmployeeRecord implements EmploymentDataInterface{
 	private boolean salariedStatus;
 	private LocalDate startDate;
 	private BigDecimal currentWage;
+	private BigDecimal currentSalary;
 	private BigDecimal currentWorkHours;
-	private int currentWorkDays;
-//	private ChangeList wages;
-//	private ChangeList workHours;
+	private BigDecimal currentWorkDays;
+
 	private ArrayList<EmploymentData> record;
 	
 	public EmployeeRecord(LocalDate startDate, BigDecimal startWage) {		
 		salariedStatus = false;
 		this.startDate = startDate;
 		currentWage = startWage; 
+		currentSalary = BigDecimal.ZERO;
 		currentWorkHours = BigDecimal.ZERO;
-		currentWorkDays  = 0;
-//		wages = new ChangeList(startWage);
-//		workHours = new ChangeList(0);
+		currentWorkDays  = BigDecimal.ZERO;
+
 		record = new ArrayList<EmploymentData>();
 	}
 	
@@ -46,8 +46,8 @@ public class EmployeeRecord implements EmploymentDataInterface{
 		return currentWage;
 	}
 	
-	public BigDecimal getWageOn(LocalDate date) {
-		return currentWage; // not implemented
+	public BigDecimal getWage(LocalDate date) {
+		return currentWage; 
 	}
 	
 	public void setWageFrom(LocalDate changeDate, BigDecimal newWage) {
@@ -55,32 +55,59 @@ public class EmployeeRecord implements EmploymentDataInterface{
 			if(!data.getDate().isBefore(changeDate)) data.setWage(newWage);
 		}
 		currentWage = newWage;
-//		wages.addChange(newWage, changeDate);
+
 	}	
 	
-	public BigDecimal getCurrentWorkHours() {
-		return currentWorkHours;
+	public boolean hasSalaryChanged(LocalDate startDate, LocalDate endDate) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public boolean hasDaysChanged(LocalDate startDate, LocalDate endDate) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 	
-	public void setWorkHoursFrom(LocalDate changeDate, BigDecimal newWorkHours) {
-		for (EmploymentData data : record) {
-			if(!data.getDate().isBefore(changeDate)) data.setWorkHours(newWorkHours);
-		}
-		currentWorkHours = newWorkHours;
-//		workHours.addChange(newWorkHours, changeDate);
+	public boolean hasHoursChanged(LocalDate startDate, LocalDate endDate) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 	
-	public int getCurrentWorkDays() {
+	public BigDecimal getSalary(LocalDate date) {
+		return currentSalary;
+		// TODO Auto-generated method stub
+
+	}
+
+	public BigDecimal getWorkDays(LocalDate date) {
 		return currentWorkDays;
+		// TODO Auto-generated method stub
+
+	}
+
+	public BigDecimal getWorkHours(LocalDate date) {
+		return currentWorkHours;
+		// TODO Auto-generated method stub
+		
 	}
 	
-	public void setWorkDaysFrom(LocalDate changeDate, int newWorkDays) {
+	public void setWorkHours(LocalDate changeDate, BigDecimal newWorkHours) {
+		currentWorkHours = newWorkHours;
+		// TODO
+	}
+	
+	public void setWorkDays(LocalDate changeDate, BigDecimal newWorkDays) {
 		currentWorkDays = newWorkDays;
+		// TODO
+	}
+	
+	public void setSalary(LocalDate changeDate, BigDecimal newSalary) {
+		currentSalary = newSalary;
+		// TODO
 	}
 	
 	public void add(EmploymentData data) {
 		data.setWage(currentWage);
-		data.setWorkHours(currentWorkHours);
 		record.add(data);
 		
 	}
@@ -104,5 +131,9 @@ public class EmployeeRecord implements EmploymentDataInterface{
 			}
 		}
 		return record.subList(startIndex, endIndex);
-	}	
+	}
+
+
+
+	
 }
