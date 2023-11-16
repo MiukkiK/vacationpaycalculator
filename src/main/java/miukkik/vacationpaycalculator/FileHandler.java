@@ -12,7 +12,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 public class FileHandler {
-	public static void inputData(String source, EmployeeRecord record) {
+	public static void inputData(String source, EmploymentList list) {
 		try {
 			File file = new File(source);
 			Scanner scanner = new Scanner(file);
@@ -25,7 +25,7 @@ public class FileHandler {
 					BigDecimal hours;
 					if (data[4] != "") hours = new BigDecimal(data[4]); else hours = BigDecimal.ZERO;
 					if (data[7] != "") bonus = new BigDecimal(data[7].replace("€", "").strip()); else bonus = BigDecimal.ZERO;
-					record.add(new EmploymentData(date, info, hours, bonus));
+					list.add(new EmploymentData(date, info, hours, bonus));
 				}
 			}
 			scanner.close();

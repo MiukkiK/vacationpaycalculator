@@ -19,6 +19,7 @@ public class EmploymentData {
 		this.info = info;
 		this.hours = hours;
 		this.bonus = bonus;
+		this.wage = BigDecimal.ZERO;
 	}
 
 	public LocalDate getDate() {

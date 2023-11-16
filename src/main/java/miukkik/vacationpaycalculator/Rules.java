@@ -19,7 +19,7 @@ public class Rules {
 	private static int cutOffDay = 31;
 	
 	private static BigDecimal firstYearVacationDays = new BigDecimal(2);
-	private static BigDecimal defaultVacationDays = new BigDecimal(2.5);
+	private static BigDecimal defaultVacationDays = new BigDecimal("2.5");
 	
 	/**
 	 * PAM Kaupan alan TES: §20 2.
@@ -38,7 +38,7 @@ public class Rules {
 	 */
 	
 	private static BigDecimal firstYearPercent = new BigDecimal(10);
-	private static BigDecimal defaultPercent = new BigDecimal(12.5);
+	private static BigDecimal defaultPercent = new BigDecimal("12.5");
 		
 	public static BigDecimal getPercentileMultiplier(LocalDate startDate, LocalDate cutOffDate) {
 		BigDecimal percent = new BigDecimal(100);
