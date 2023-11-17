@@ -1,3 +1,7 @@
+/*
+ * @author Mia Kallio
+ */
+
 package miukkik.vacationpaycalculator;
 
 import java.math.BigDecimal;
@@ -13,17 +17,29 @@ public class VacationPayCalculatorTest extends TestCase {
 		testCase.getEmploymentList().setWageFrom(LocalDate.of(2009, 10, 15), new BigDecimal(11));
 
 		VacationPayCalculator calculator = new VacationPayCalculator(testCase, 2010);
-		// System.out.println(calculator);
+
+		
+		assertEquals("Incorrect amount of vacation days", 0, calculator.getVacationDays());
+		assertEquals("Incorrect category", null, calculator.getCategory());
+		assertEquals("Total percentile pay does not match", 0, calculator.getPercentilePayTotal().compareTo(new BigDecimal(14358)));
+		assertEquals("Incorrect percentile multiplier", 0, calculator.getPercentileMultiplier().compareTo(new BigDecimal("12.5").divide(new BigDecimal(100))));
+		assertEquals("Incorrect amount of leave days", 0, calculator.getTotalLeaveDays().compareTo(new BigDecimal(36)));		
 	}
 	
 	public void testCaseB() {
 		EmployeeRecord testCase = new EmployeeRecord(LocalDate.of(2008, 6, 1), new BigDecimal(10));
 		FileHandler.inputData("src/test/resources/raw_hours.txt", testCase.getEmploymentList());
-		testCase.getWorkHourChanges().add(new ChangeData(LocalDate.MIN, new BigDecimal(37.5)));
+		testCase.getWorkHourChanges().add(new ChangeData(testCase.getStartDate(), new BigDecimal(37.5)));
 		testCase.getEmploymentList().setWageFrom(LocalDate.of(2009, 10, 15), new BigDecimal(11));
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(testCase, 2010);
-		// System.out.println(calculator);
+		System.out.println(calculator);
+		
+		assertEquals("Incorrect amount of work days", 0, calculator.getTotalDays().compareTo(new BigDecimal(195)));
+		assertEquals("Incorrect amount of vacation days", 25, calculator.getVacationDays());
+		assertEquals("Incorrect category", VacationPayCalculator.Category.GENERAL, calculator.getCategory());
+		assertEquals("Total pay does not match", 0, calculator.getTotalPay().compareTo(new BigDecimal(14208)));
+		assertEquals("Total percentile pay does not match", 0, calculator.getPercentilePayTotal().compareTo(new BigDecimal(150)));
 	}
 	
 	public void testBasicVacationPay() {
@@ -38,9 +54,10 @@ public class VacationPayCalculatorTest extends TestCase {
 		list.add(new EmploymentData(LocalDate.of(2000, 1, 6), "", new BigDecimal(8), new BigDecimal(100)));
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2000);
-		assertEquals("Category does not match", VacationPayCalculator.Category.GENERAL, calculator.getCategory());
+
 		assertEquals("Total pay does not match", 0, calculator.getTotalPay().compareTo(new BigDecimal(500)));
-		assertEquals("Vacation days do not match", 2, calculator.getVacationDays());
+		assertEquals("Incorrect amount of vacation days", 2, calculator.getVacationDays());
+		assertEquals("Incorrect category", VacationPayCalculator.Category.GENERAL, calculator.getCategory());
 		assertEquals("Average daily pay does not match", 0, calculator.getAverageDailyPay().compareTo(new BigDecimal(100)));
 		assertEquals("Vacation pay does not match", 0, calculator.getVacationPay().compareTo(new BigDecimal(180)));
 	}
@@ -59,8 +76,8 @@ public class VacationPayCalculatorTest extends TestCase {
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2000);
 		
-		assertEquals("Category does not match", null, calculator.getCategory());
-		assertEquals("Vacation pay in incorrect category", 0, calculator.getVacationPay().compareTo(BigDecimal.ZERO));
+		assertEquals("Incorrect category", null, calculator.getCategory());
+		assertEquals("Vacation pay in incorrect category (general)", 0, calculator.getVacationPay().compareTo(BigDecimal.ZERO));
 		assertEquals("Percentile pay does not match", 0, calculator.getPercentileVacationPay().compareTo(new BigDecimal(50)));
 	}
 
@@ -77,7 +94,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2000);
 		
-		assertEquals("Vacation pay in incorrect category", 0, calculator.getVacationPay().compareTo(BigDecimal.ZERO));
+		assertEquals("Vacation pay in incorrect category (general)", 0, calculator.getVacationPay().compareTo(BigDecimal.ZERO));
 		assertEquals("Percentile pay does not match", 0, calculator.getPercentileVacationPay().compareTo(new BigDecimal(32)));
 	}
 	
@@ -161,7 +178,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2000);
 
-		assertEquals("Category does not match", VacationPayCalculator.Category.GENERAL, calculator.getCategory());
+		assertEquals("Incorrect category", VacationPayCalculator.Category.GENERAL, calculator.getCategory());
 		assertEquals("Vacation pay does not match", 0, calculator.getVacationPay().compareTo(new BigDecimal("144")));
 		assertEquals("Percentile pay does not match", 0, calculator.getPercentileVacationPay().compareTo(new BigDecimal(32)));
 	}
@@ -184,4 +201,32 @@ public class VacationPayCalculatorTest extends TestCase {
 		assertEquals("Vacation pay does not match", 0, calculator.getVacationPay().compareTo(new BigDecimal(270)));
 	}
 
+	public void testBasicSalariedVacationPay() {
+		EmployeeRecord record = new EmployeeRecord(LocalDate.of(2000,1,1), BigDecimal.ZERO);
+		record.setSalariedStatus(true);
+		record.getSalaryChanges().add(new ChangeData(record.getStartDate(), new BigDecimal(1000)));
+		record.getWorkDayChanges().add(new ChangeData(record.getStartDate(), new BigDecimal(5)));
+		
+		VacationPayCalculator calculator = new VacationPayCalculator(record, 2001);
+		
+		assertEquals("Incorrect amount of weekly workdays", 0, calculator.getMonthlyWorkDays().compareTo(new BigDecimal(5).multiply(new BigDecimal(4))));
+		assertEquals("Incorrect amount of vacation days", 30, calculator.getVacationDays());
+		assertEquals("Incorrect category", VacationPayCalculator.Category.SALARIED, calculator.getCategory());
+		assertEquals("Vacation pay does not match", 0, calculator.getVacationPay().compareTo(new BigDecimal(1500)));
+		assertEquals("Vacation pay in incorrect category (percentile)", 0, calculator.getPercentileVacationPay().compareTo(BigDecimal.ZERO));
+	}
+	
+	public void testSalariedNotEnoughDays() {
+		EmployeeRecord record = new EmployeeRecord(LocalDate.of(2000,1,1), BigDecimal.ZERO);
+		record.setSalariedStatus(true);
+		record.getSalaryChanges().add(new ChangeData(record.getStartDate(), new BigDecimal(600)));
+		record.getWorkDayChanges().add(new ChangeData(record.getStartDate(), new BigDecimal(3)));
+		
+		VacationPayCalculator calculator = new VacationPayCalculator(record, 2001);
+		
+		assertEquals("Incorrect category", null, calculator.getCategory());
+		assertEquals("Incorrect amount of vacation days", 0, calculator.getVacationDays());
+		assertEquals("Vacation pay in incorrect category (salaried)", null, calculator.getVacationPay());
+		assertEquals("Vacation pay does not match", 0, calculator.getPercentileVacationPay().compareTo(new BigDecimal(900)));
+	}
 }
