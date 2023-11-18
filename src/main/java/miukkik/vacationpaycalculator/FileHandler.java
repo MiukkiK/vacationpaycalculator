@@ -1,4 +1,6 @@
 /**
+ * Static file handler for reading work events from a text file to a list.
+ * Uses a specific format of cut/pasted data from Excel, with TAB for column separators and line break for rows. 
  * @author Mia Kallio
  */
 

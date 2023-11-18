@@ -1,4 +1,6 @@
 /*
+ * Test class for the vacation pay calculator. Checks for outputs with given test cases A and B.
+ * Also tests basic vacation pay calculations for salaried and general categories and percentile calculations.
  * @author Mia Kallio
  */
 
@@ -17,7 +19,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		testCase.getEmploymentList().setWageFrom(LocalDate.of(2009, 10, 15), new BigDecimal(11));
 
 		VacationPayCalculator calculator = new VacationPayCalculator(testCase, 2010);
-
+		// System.out.println(calculator);
 		
 		assertEquals("Incorrect amount of vacation days", 0, calculator.getVacationDays());
 		assertEquals("Incorrect category", null, calculator.getCategory());
@@ -33,7 +35,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		testCase.getEmploymentList().setWageFrom(LocalDate.of(2009, 10, 15), new BigDecimal(11));
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(testCase, 2010);
-		System.out.println(calculator);
+		// System.out.println(calculator);
 		
 		assertEquals("Incorrect amount of work days", 0, calculator.getTotalDays().compareTo(new BigDecimal(195)));
 		assertEquals("Incorrect amount of vacation days", 25, calculator.getVacationDays());

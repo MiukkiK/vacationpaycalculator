@@ -1,4 +1,7 @@
 /**
+ * Simple data object for changes of any type.
+ * Stores date of effect and corresponding value.
+ * Default constructor, getters and setters.
  * @author Mia Kallio
  */
 

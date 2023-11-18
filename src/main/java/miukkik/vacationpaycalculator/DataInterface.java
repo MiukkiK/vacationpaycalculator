@@ -1,4 +1,5 @@
 /**
+ * Generic Interface for data list objects. Requires methods for adding data to the list and returning a partial list of data between given start and end dates.
  * @author Mia Kallio
  */
 

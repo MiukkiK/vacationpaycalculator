@@ -1,4 +1,7 @@
 /**
+ * Class that contains rules used in calculation of vacation pay. Finnish legislation quoted in corresponding spots.
+ * Change the private static values to customize rules.
+ * 
  * @author Mia Kallio
  */
 

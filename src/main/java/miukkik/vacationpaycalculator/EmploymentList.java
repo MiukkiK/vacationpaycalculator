@@ -1,4 +1,6 @@
 /*
+ * Data list storing data objects in an ArrayList. Implements DataInterFace.
+ * Also has a method for setting the wage in stored objects. 
  * @author Mia Kallio
  */
 

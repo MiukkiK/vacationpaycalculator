@@ -1,4 +1,6 @@
 /*
+ * Main calculator class. Performs the vacation pay calculations.
+ * custom output toString() for instructions on how to fill the vacation pay form.
  * @author Mia Kallio
  */
 
@@ -64,7 +66,7 @@ public class VacationPayCalculator {
 		ChangeList dayChanges = record.getWorkDayChanges();
 		if (!dayChanges.getDataBetween(startDate, endDate).isEmpty()) {
 			hasDaysChanged = true;
-			// TODO go through changes
+			// TODO work day changes not implemeneted yet
 
 		} else {
 			hasDaysChanged = false;
@@ -75,7 +77,7 @@ public class VacationPayCalculator {
 		}
 		ChangeList hourChanges = record.getWorkHourChanges();
 		if (!hourChanges.getDataBetween(startDate, endDate).isEmpty()) {
-			// TODO go through changes
+			// TODO work hour changes not implemented yet
 
 		} else {
 			BigDecimal unchangedHours = hourChanges.getValueOn(endDate).multiply(new BigDecimal(4));
@@ -93,7 +95,7 @@ public class VacationPayCalculator {
 			BigDecimal unchangedSalary = record.getSalaryChanges().getValueOn(endDate);
 			ChangeList salaryChanges = record.getSalaryChanges();
 			if (!salaryChanges.getDataBetween(startDate, endDate).isEmpty()) {
-				// TODO
+				// TODO salary changes not implememnted yet
 
 			} else {
 				for (int i=0; i < 12; i++) {
