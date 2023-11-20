@@ -1,9 +1,3 @@
-/*
- * Main calculator class. Performs the vacation pay calculations.
- * custom output toString() for instructions on how to fill the vacation pay form.
- * @author Mia Kallio
- */
-
 package miukkik.vacationpaycalculator;
 
 import java.math.BigDecimal;
@@ -13,10 +7,17 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 
+/** 
+ * Main calculator class. Performs the vacation pay calculations.
+ * custom output toString() for instructions on how to fill the vacation pay form.
+ * @author Mia Kallio
+ */
 public class VacationPayCalculator {
 	
 	private final BigDecimal[] plannedDays = new BigDecimal[12];
 	private final BigDecimal[] plannedHours = new BigDecimal[12];
+	private boolean hasDaysChanged;
+	private VacationDayMethod vacationDayMethod;
 
 	private final BigDecimal[] monthlyHours = new BigDecimal[12];
 	private final BigDecimal[] monthlyDays = new BigDecimal[12];
@@ -25,11 +26,15 @@ public class VacationPayCalculator {
 
 	private EmployeeRecord record;
 	
-	private boolean hasDaysChanged;
+	private int applicableMonths;
+	private BigDecimal vacationDaysPerApplicableMonth;
 	private int vacationDays;
+	
 	private BigDecimal totalLeaveDays;
 	private BigDecimal averageDailyPay;
 
+	private boolean eligibleForVacationBonus;
+	
 	private Category category;
 	//category 1 fields
 	private BigDecimal monthlySalary;
@@ -39,21 +44,26 @@ public class VacationPayCalculator {
 
 	//category 2 fields
 	private BigDecimal totalPay;
-	private BigDecimal totalDays;
+	private BigDecimal totalWorkDays;
 	private BigDecimal averageWeeklyWorkDays;
 	private BigDecimal vacationPayMultiplier;
 
 	//category 4 fields
-	private BigDecimal percentilePayTotal;
+	private BigDecimal totalPercentilePay;
 	private BigDecimal missedPay;
 	private BigDecimal percentileMultiplier;
 	private BigDecimal percentileVacationPay;
 
+	private BigDecimal vacationBonus;
 	
-
+	public enum VacationDayMethod {
+		DAYS,
+		HOURS;
+	}
+	
 	public enum Category {
 		SALARIED,
-		GENERAL;
+		DAILY_PAY;
 	}
 
 	public VacationPayCalculator (EmployeeRecord record, int year) {
@@ -63,6 +73,15 @@ public class VacationPayCalculator {
 		final LocalDate endDate = Rules.getCutOffDate(year);
 		final LocalDate startDate = endDate.minusYears(1).plusDays(1); 
 
+		/*
+		 * Vuosilomalaki 18.3.2005/162: §6
+		 * Jos työntekijä on sopimuksen mukaisesti työssä niin harvoina päivinä,
+		 * että hänelle ei tästä syystä kerry ainoatakaan 14 työssäolopäivää sisältävää
+		 * kalenterikuukautta tai vain osa kalenterikuukausista sisältää 14 työssäolopäivää,
+		 * täydeksi lomanmääräytymiskuukaudeksi katsotaan sellainen kalenterikuukausi, jonka
+		 * aikana työntekijälle on kertynyt vähintään 35 työtuntia tai 7 §:ssä tarkoitettua 
+		 * työssäolon veroista tuntia.
+		 */
 		ChangeList dayChanges = record.getWorkDayChanges();
 		if (!dayChanges.getDataBetween(startDate, endDate).isEmpty()) {
 			hasDaysChanged = true;
@@ -74,16 +93,22 @@ public class VacationPayCalculator {
 			for (int i=0; i < 12; i++) {
 				plannedDays[i] = unchangedDays;
 			}
+			if (unchangedDays.multiply(new BigDecimal(4)).compareTo(Rules.getVacationDaysRequirement()) != -1) {
+				vacationDayMethod = VacationDayMethod.DAYS;
+			}
 		}
+		
 		ChangeList hourChanges = record.getWorkHourChanges();
 		if (!hourChanges.getDataBetween(startDate, endDate).isEmpty()) {
 			// TODO work hour changes not implemented yet
 
 		} else {
 			BigDecimal unchangedHours = hourChanges.getValueOn(endDate).multiply(new BigDecimal(4));
-
 			for (int i=0; i < 12; i++) {
 				plannedHours[i] = unchangedHours;
+			}
+			if (unchangedHours.multiply(new BigDecimal(4)).compareTo(Rules.getVacationHoursRequirement()) != -1) {
+				vacationDayMethod = VacationDayMethod.HOURS;
 			}
 		}
 
@@ -107,8 +132,8 @@ public class VacationPayCalculator {
 			for(EmploymentData data : filteredList) {
 				int monthIndex = data.getDate().getMonthValue() - 1;
 
-				/**
-				 * Vuosilomalaki §7
+				/*
+				 * Vuosilomalaki 18.3.2005/162: §7
 				 * Työssäolon veroisena pidetään työstä poissaoloaikaa, jolta työnantaja on lain mukaan velvollinen maksamaan työntekijälle palkan.
 				 *
 				 * PAM Kaupan alan TES, §20 10.
@@ -138,22 +163,23 @@ public class VacationPayCalculator {
 		for (BigDecimal thisMonthsPay : monthlyPay) {
 			if (thisMonthsPay != null) totalPay = totalPay.add(thisMonthsPay);
 		}
-		totalDays = BigDecimal.ZERO;
+		totalWorkDays = BigDecimal.ZERO;
 		for (BigDecimal thisMonthsDays : monthlyDays) {
-			if (thisMonthsDays != null) totalDays = totalDays.add(thisMonthsDays);
+			if (thisMonthsDays != null) totalWorkDays = totalWorkDays.add(thisMonthsDays);
 		}
-		averageDailyPay = totalPay.divide(totalDays, 3, RoundingMode.HALF_UP);
+		averageDailyPay = totalPay.divide(totalWorkDays, 3, RoundingMode.HALF_UP);
 
 		// vacation day calculation
 
-		BigDecimal tempVacationDays = BigDecimal.ZERO;
-		percentilePayTotal = BigDecimal.ZERO;
+		applicableMonths = 0;
+		totalPercentilePay = BigDecimal.ZERO;
 		for (int i = 0; i < 12; i++) {
 			if (monthlyHours[i] == null) monthlyHours[i] = BigDecimal.ZERO;
 			if (monthlyPay[i] == null) monthlyPay[i] = BigDecimal.ZERO;		
 			if (monthlyDays[i] == null) monthlyDays[i] = BigDecimal.ZERO;
 			if (monthlyLeave[i] == null) monthlyLeave[i] = BigDecimal.ZERO;
-			/**
+		
+			/*
 			 * Vuosilomalaki 18.3.2005/162: §6
 			 * Jos työntekijä on sopimuksen mukaisesti työssä niin harvoina päivinä,
 			 * että hänelle ei tästä syystä kerry ainoatakaan 14 työssäolopäivää sisältävää
@@ -162,29 +188,33 @@ public class VacationPayCalculator {
 			 * aikana työntekijälle on kertynyt vähintään 35 työtuntia tai 7 §:ssä tarkoitettua 
 			 * työssäolon veroista tuntia.
 			 */
-
-			if ((plannedDays[i].compareTo(Rules.getVacationDaysRequirement()) != -1) && (monthlyDays[i].add(monthlyLeave[i]).compareTo(Rules.getVacationDaysRequirement()) != -1)) {
-				tempVacationDays = tempVacationDays.add(BigDecimal.ONE);
-			}
-			else if ((plannedHours[i].compareTo(Rules.getVacationHoursRequirement()) != -1) && (monthlyHours[i].compareTo(Rules.getVacationHoursRequirement()) != -1)) {
-				tempVacationDays = tempVacationDays.add(BigDecimal.ONE);
-			}
+			if ((plannedDays[i].compareTo(Rules.getVacationDaysRequirement()) != -1) && 
+					(monthlyDays[i].add(monthlyLeave[i]).compareTo(Rules.getVacationDaysRequirement()) != -1))
+				applicableMonths++;
+			// Add leave days as proportionate hours as planned weekly hours / 5 per day
+			else if ((plannedHours[i].compareTo(Rules.getVacationHoursRequirement()) != -1) && 
+					(monthlyLeave[i].divide(new BigDecimal(5)).multiply(plannedHours[i]).add(monthlyHours[i]).compareTo(Rules.getVacationHoursRequirement()) != -1))
+				applicableMonths++;
 			else {
-				percentilePayTotal = percentilePayTotal.add(monthlyPay[i]);
+				totalPercentilePay = totalPercentilePay.add(monthlyPay[i]);
 				totalPay = totalPay.subtract(monthlyPay[i]);
 			}
 		}
-		tempVacationDays = tempVacationDays.multiply(Rules.getVacationDayMultiplier(record.getStartDate(), endDate));
-
-		/**
-		 * Vuosilomalaki §5
+		/* 
+		 * Vuosilomalaki 18.3.2005/162: §5
+		 * Työntekijällä on oikeus saada lomaa kaksi ja puoli arkipäivää kultakin täydeltä lomanmääräytymiskuukaudelta. 
+		 * Jos työsuhde on lomanmääräytymisvuoden loppuun mennessä jatkunut yhdenjaksoisesti alle vuoden, 
+		 * työntekijällä on kuitenkin oikeus saada lomaa kaksi arkipäivää kultakin täydeltä lomanmääräytymiskuukaudelta. 
 		 * Loman pituutta laskettaessa päivän osa pyöristetään täyteen lomapäivään.
-		 */
-		tempVacationDays = tempVacationDays.round(new MathContext(tempVacationDays.precision() - tempVacationDays.scale(), RoundingMode.CEILING));
-		vacationDays = tempVacationDays.intValue();
+		 */	
+		vacationDaysPerApplicableMonth = Rules.getVacationDayMultiplier(record.getStartDate(), endDate);
+		BigDecimal unroundedVacationDays = vacationDaysPerApplicableMonth.multiply(new BigDecimal(applicableMonths));	
+		unroundedVacationDays = unroundedVacationDays.round(new MathContext(unroundedVacationDays.precision() - unroundedVacationDays.scale(), RoundingMode.CEILING));
+		vacationDays = unroundedVacationDays.intValue();
 
-
-
+		if (vacationDays != 0) eligibleForVacationBonus = true;
+		else eligibleForVacationBonus = false;
+		
 		// vacation day based pay calculation
 
 		/**
@@ -196,14 +226,21 @@ public class VacationPayCalculator {
 		if (record.isSalaried() && !hasDaysChanged) {
 			if (vacationDays != 0) {
 				category = Category.SALARIED;
+				
 				monthlySalary = record.getSalaryChanges().getValueOn(endDate);
 				monthlyWorkDays = record.getWorkDayChanges().getValueOn(endDate).multiply(new BigDecimal(4));
 				dailyPay = monthlySalary.divide(monthlyWorkDays);
 
 				vacationPay = dailyPay.multiply(new BigDecimal(vacationDays));
 			}
+			/*
+			 * Vuosilomalaki 18.3.2005/162: §11
+			 * Muun kuin viikko- tai kuukausipalkalla työskentelevän sellaisen työntekijän vuosilomapalkka,
+			 * joka sopimuksen mukaan työskentelee vähintään 14 päivänä kalenterikuukaudessa, lasketaan
+			 * kertomalla hänen keskipäiväpalkkansa lomapäivien määrän perusteella määräytyvällä kertoimella
+			 */
 		} else {
-			if (vacationDays != 0) category = Category.GENERAL;
+			if (vacationDays != 0) category = Category.DAILY_PAY;
 			vacationPayMultiplier = Rules.getVacationPayMultiplier(vacationDays);
 			vacationPay = averageDailyPay.multiply(vacationPayMultiplier);
 			
@@ -215,7 +252,7 @@ public class VacationPayCalculator {
 			}
 			 */
 		}
-
+		if (eligibleForVacationBonus) vacationBonus = vacationPay.divide(new BigDecimal(2));
 		// percentile vacation pay calculation
 
 		totalLeaveDays = BigDecimal.ZERO;
@@ -223,13 +260,13 @@ public class VacationPayCalculator {
 			totalLeaveDays = totalLeaveDays.add(leaveThisMonth);
 		}
 		percentileVacationPay = BigDecimal.ZERO;
-		if ((percentilePayTotal != BigDecimal.ZERO) || (totalLeaveDays != BigDecimal.ZERO)) {
+		if ((totalPercentilePay != BigDecimal.ZERO) || (totalLeaveDays != BigDecimal.ZERO)) {
 
 			if (category == Category.SALARIED) missedPay = totalLeaveDays.multiply(dailyPay); 
 			else missedPay = totalLeaveDays.multiply(averageDailyPay);
 
 			percentileMultiplier = Rules.getPercentileMultiplier(record.getStartDate(), endDate);
-			percentileVacationPay = percentilePayTotal.add(missedPay).multiply(percentileMultiplier);		
+			percentileVacationPay = totalPercentilePay.add(missedPay).multiply(percentileMultiplier);		
 		}
 	}
 
@@ -241,6 +278,30 @@ public class VacationPayCalculator {
 		System.out.println("Category is " + category);
 	}
 
+	public BigDecimal[] getPlannedDays() {
+		return plannedDays;
+	}
+
+	public BigDecimal[] getPlannedHours() {
+		return plannedHours;
+	}
+	
+	public VacationDayMethod getVacationDayMethod() {
+		return vacationDayMethod;
+	}
+	
+	public int getApplicableMonths() {
+		return applicableMonths;
+	}
+
+	public BigDecimal getVacationDaysPerApplicableMonth() {
+		return vacationDaysPerApplicableMonth;
+	}
+
+	public int getVacationDays() {
+		return vacationDays;
+	}
+	
 	public BigDecimal[] getMonthlyHours() {
 		return monthlyHours;
 	}
@@ -255,10 +316,6 @@ public class VacationPayCalculator {
 
 	public BigDecimal[] getMonthlyPay() {
 		return monthlyPay;
-	}
-
-	public int getVacationDays() {
-		return vacationDays;
 	}
 
 	public BigDecimal getAverageDailyPay() {
@@ -289,8 +346,8 @@ public class VacationPayCalculator {
 		return totalPay;
 	}
 
-	public BigDecimal getTotalDays() {
-		return totalDays;
+	public BigDecimal getTotalWorkDays() {
+		return totalWorkDays;
 	}
 
 	public BigDecimal getTotalLeaveDays() {
@@ -306,7 +363,7 @@ public class VacationPayCalculator {
 	}
 
 	public BigDecimal getPercentilePayTotal() {
-		return percentilePayTotal;
+		return totalPercentilePay;
 	}
 
 	public BigDecimal getMissedPay() {
@@ -321,22 +378,30 @@ public class VacationPayCalculator {
 		return percentileVacationPay;
 	}
 
+	public boolean isEligibleForVacationBonus() {
+		return eligibleForVacationBonus;
+	}
+	
+	public BigDecimal getVacationBonus() {
+		return vacationBonus;
+	}
+	
 	@Override
 	public String toString() {
 		String resultString = "";
 		if (category == Category.SALARIED) {
 			resultString = "Kohtaan 1:\n";
 			resultString += "(" + monthlySalary + " € : " + monthlyWorkDays + " = " + String.format(Locale.ENGLISH, "%.2f", dailyPay) + " X " + vacationDays + " = " + String.format(Locale.ENGLISH, "%.2f", vacationPay) + " €\n";
-		} else  if (category == Category.GENERAL) {
+		} else  if (category == Category.DAILY_PAY) {
 			resultString = "Kohtaan 2:\n";
-			resultString += totalPay + " € : " + totalDays + " = " + String.format(Locale.ENGLISH, "%.2f", averageDailyPay) + " €/pv { X ";
+			resultString += totalPay + " € : " + totalWorkDays + " = " + String.format(Locale.ENGLISH, "%.2f", averageDailyPay) + " €/pv { X ";
 			if (record.isSalaried()) resultString += averageWeeklyWorkDays;
 			else resultString += "-";
 			resultString += " : 5 } X " + vacationPayMultiplier + " = " + String.format(Locale.ENGLISH, "%.2f", vacationPay) + " €\n";
 		}
 		if (percentileVacationPay != BigDecimal.ZERO) {
 			resultString += "Kohtaan 4:\n";
-			resultString += percentilePayTotal + " € + " + String.format(Locale.ENGLISH, "%.2f", missedPay) + " € X " + String.format(Locale.ENGLISH, "%.1f", percentileMultiplier.multiply(new BigDecimal(100))) + " % = " + String.format(Locale.ENGLISH, "%.2f", percentileVacationPay) + " €";
+			resultString += totalPercentilePay + " € + " + String.format(Locale.ENGLISH, "%.2f", missedPay) + " € X " + String.format(Locale.ENGLISH, "%.1f", percentileMultiplier.multiply(new BigDecimal(100))) + " % = " + String.format(Locale.ENGLISH, "%.2f", percentileVacationPay) + " €";
 		}
 		return resultString;
 	}

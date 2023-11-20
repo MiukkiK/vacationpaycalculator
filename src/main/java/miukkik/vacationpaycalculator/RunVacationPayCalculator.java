@@ -1,17 +1,17 @@
-/**
- * Vacation pay calculator main method for running the calculator. Input desired variables for calculating vacation pay according to set rules.
- * 
- * @author Mia Kallio
- */
-
 package miukkik.vacationpaycalculator;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+/**
+ * Vacation pay calculator main method for running the calculator. Input desired variables for calculating vacation pay according to set rules.
+ * 
+ * @author Mia Kallio
+ */
 public class RunVacationPayCalculator {
 
 	public static void main(String[] args) {;
+		/**  */
 		EmployeeRecord record = new EmployeeRecord(LocalDate.of(2008, 6, 1), new BigDecimal(10)); // set employee start year and initial wage
 		FileHandler.inputData("src/main/resources/raw_hours.txt", record.getEmploymentList()); // get raw data from a file
 		

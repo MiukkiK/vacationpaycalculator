@@ -1,9 +1,3 @@
-/**
- * Static file handler for reading work events from a text file to a list.
- * Uses a specific format of cut/pasted data from Excel, with TAB for column separators and line break for rows. 
- * @author Mia Kallio
- */
-
 package miukkik.vacationpaycalculator;
 
 import java.io.File;
@@ -13,6 +7,11 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
+/**
+ * Static file handler for reading work events from a text file to a list.
+ * Uses a specific format of cut/pasted data from Excel, with TAB for column separators and line break for rows. 
+ * @author Mia Kallio
+ */
 public class FileHandler {
 	public static void inputData(String source, EmploymentList list) {
 		try {

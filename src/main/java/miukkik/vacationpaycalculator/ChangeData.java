@@ -1,15 +1,14 @@
-/**
- * Simple data object for changes of any type.
- * Stores date of effect and corresponding value.
- * Default constructor, getters and setters.
- * @author Mia Kallio
- */
-
 package miukkik.vacationpaycalculator;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+/** 
+ * Simple data object for changes of any type.
+ * Stores date of effect and corresponding value.
+ * Default constructor, getters and setters.
+ * @author Mia Kallio
+ */
 public class ChangeData {
 
 	BigDecimal value;

@@ -1,15 +1,14 @@
-/*
- * Data list storing data objects in an ArrayList. Implements DataInterFace.
- * Also has a method for setting the wage in stored objects. 
- * @author Mia Kallio
- */
-
 package miukkik.vacationpaycalculator;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
+/**
+ * Data list storing data objects in an ArrayList. Implements DataInterFace.
+ * Also has a method for setting the wage in stored objects. 
+ * @author Mia Kallio
+ */
 public class EmploymentList implements DataInterface<EmploymentData> {
 
 	private ArrayList<EmploymentData> record;

@@ -1,15 +1,14 @@
+package miukkik.vacationpaycalculator;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
 /**
  * Class that contains rules used in calculation of vacation pay. Finnish legislation quoted in corresponding spots.
  * Change the private static values to customize rules.
  * 
  * @author Mia Kallio
  */
-
-package miukkik.vacationpaycalculator;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-
 public class Rules {
 	/*
 	 * PAM Kaupan alan TES: §20 2. 
@@ -34,12 +33,11 @@ public class Rules {
 	private static BigDecimal vacationHourRequirement = new BigDecimal(35);
 	
 	/**
-	 * PAM Kaupan alan TES: §20 7.
-	 * Lomapalkkaan ja -korvaukseen lisätään lomanmääräytymisvuoden aikana maksetuista lisistä:
-	 * 10 % työsuhteen kestettyä lomanmääräytymisvuoden loppuun (31.3.) mennessä alle 1 vuoden
-	 * 12,5 % työsuhteen kestettyä lomanmääräytymisvuoden loppuun (31.3.) mennessä vähintään 1 vuoden.
+	 * PAM Kaupan alan TES: §20 8.
+	 * Lomapalkka tai -korvaus on sekä tuntipalkkaisella että suhteutettua kuukausipalkkaa saavalla jäljempänä esitetystä lomanmääräytymisvuoden ansiosta:
+	 * 10 % työsuhteen kestettyä lomanmääräytymisvuoden loppuun (31.3.) mennessä alle vuoden
+	 * 12,5 % työsuhteen kestettyä lomanmääräytymisvuoden loppuun (31.3.) mennessä vähintään vuoden.
 	 */
-	
 	private static BigDecimal firstYearPercent = new BigDecimal(10);
 	private static BigDecimal defaultPercent = new BigDecimal("12.5");
 		

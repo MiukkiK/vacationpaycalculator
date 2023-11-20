@@ -1,16 +1,15 @@
-/**
+package miukkik.vacationpaycalculator;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+/** 
  * Simple data object for storing work events.
  * Stores date of event, additional info, work hours, current wage and possible bonus pay.
  * Constructor sets all fields except wage. Default getters, and setter for wage.
  * Custom toString() for work event output.
  * @author Mia Kallio
  */
-
-package miukkik.vacationpaycalculator;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-
 public class EmploymentData {
 	private LocalDate date;
 	private BigDecimal hours;

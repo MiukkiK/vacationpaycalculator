@@ -1,16 +1,15 @@
-/**
+package miukkik.vacationpaycalculator;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+/** 
  * Employee object for vacation pay calculator.
  * Stores employee start date and whether employee is salaried or not.
  * Also has data lists for changes and work events.
  * Getters for variables and lists, and setter for salaried status.
  * @author Mia Kallio
  */
-
-package miukkik.vacationpaycalculator;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-
 public class EmployeeRecord {
 	private boolean salariedStatus;
 	private LocalDate startDate;

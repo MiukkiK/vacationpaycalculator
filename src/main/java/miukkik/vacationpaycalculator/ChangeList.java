@@ -1,15 +1,14 @@
-/**
- * Data list object storing changes associated with the LocalDate they come into effect. Implements DataInterface.
- * Also has a method to get the value in effect at a given LocalDate.
- * @author Mia Kallio
- */
-
 package miukkik.vacationpaycalculator;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 
+/** 
+ * Data list object storing changes associated with the LocalDate they come into effect. Implements DataInterface.
+ * Also has a method to get the value in effect at a given LocalDate.
+ * @author Mia Kallio
+ */
 public class ChangeList implements DataInterface<ChangeData>{
 
 	private ArrayList<ChangeData> changes;
