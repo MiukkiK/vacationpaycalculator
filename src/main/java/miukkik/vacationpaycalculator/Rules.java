@@ -17,11 +17,11 @@ public class Rules {
 	 * alle vuoden: 2 arkipäivää
 	 * vähintään vuoden: 2,5 arkipäivää.
 	 */
-	private static int cutOffMonth = 3;
-	private static int cutOffDay = 31;
+	private static int laskuKausiKuukausi = 3;
+	private static int laskuKausiPaiva = 31;
 	
-	private static BigDecimal firstYearVacationDays = new BigDecimal(2);
-	private static BigDecimal defaultVacationDays = new BigDecimal("2.5");
+	private static BigDecimal lomanAnsaintaUusiTyontekija = new BigDecimal(2);
+	private static BigDecimal lomanAnsaintaVanhaTyontekija = new BigDecimal("2.5");
 	
 	/**
 	 * PAM Kaupan alan TES: §20 2.
@@ -29,8 +29,8 @@ public class Rules {
 	 * vähintään 14 päivää
 	 * vähintään 35 tuntia.
 	 */
-	private static BigDecimal vacationDayRquirement = new BigDecimal(14);
-	private static BigDecimal vacationHourRequirement = new BigDecimal(35);
+	private static BigDecimal kuukausiPaivaVaatimus = new BigDecimal(14);
+	private static BigDecimal kuukausiTuntiVaatimus = new BigDecimal(35);
 	
 	/**
 	 * PAM Kaupan alan TES: §20 8.
@@ -38,30 +38,29 @@ public class Rules {
 	 * 10 % työsuhteen kestettyä lomanmääräytymisvuoden loppuun (31.3.) mennessä alle vuoden
 	 * 12,5 % työsuhteen kestettyä lomanmääräytymisvuoden loppuun (31.3.) mennessä vähintään vuoden.
 	 */
-	private static BigDecimal firstYearPercent = new BigDecimal(10);
-	private static BigDecimal defaultPercent = new BigDecimal("12.5");
+	private static BigDecimal korvausProsenttiUusiTyontekija = new BigDecimal(10);
+	private static BigDecimal korvausProsenttiVanhaTyontekija = new BigDecimal("12.5");
 		
-	public static BigDecimal getPercentileMultiplier(LocalDate startDate, LocalDate cutOffDate) {
-		BigDecimal percent = new BigDecimal(100);
-		if (startDate.isBefore(cutOffDate.minusYears(1))) return defaultPercent.divide(percent);
-		else return firstYearPercent.divide(percent);
+	public static BigDecimal getKorvausProsentti(LocalDate startDate, LocalDate cutOffDate) {
+		if (startDate.isBefore(cutOffDate.minusYears(1))) return korvausProsenttiVanhaTyontekija;
+		else return korvausProsenttiUusiTyontekija;
 	}
 	
-	public static BigDecimal getVacationDayMultiplier(LocalDate startDate, LocalDate cutOffDate) {
-		if (startDate.isBefore(cutOffDate.minusYears(1))) return defaultVacationDays;
-		else return firstYearVacationDays;
+	public static BigDecimal getLomanAnsainta(LocalDate startDate, LocalDate cutOffDate) {
+		if (startDate.isBefore(cutOffDate.minusYears(1))) return lomanAnsaintaVanhaTyontekija;
+		else return lomanAnsaintaUusiTyontekija;
 	}
 	
-	public static BigDecimal getVacationDaysRequirement() {
-		return vacationDayRquirement;
+	public static BigDecimal getKuukausiPaivaVaatimus() {
+		return kuukausiPaivaVaatimus;
 	}
 
-	public static BigDecimal getVacationHoursRequirement() {
-		return vacationHourRequirement;
+	public static BigDecimal getKuukausiTuntiVaatimus() {
+		return kuukausiTuntiVaatimus;
 	}	
 	
-	public static LocalDate getCutOffDate(int year) { 
-		return LocalDate.of(year, cutOffMonth, cutOffDay);
+	public static LocalDate getLaskuKaudenLoppu(int year) { 
+		return LocalDate.of(year, laskuKausiKuukausi, laskuKausiPaiva);
 	}
 
 	/**
@@ -73,7 +72,7 @@ public class Rules {
 	 * @param amount of vacation days
 	 * @return corresponding vacation pay multiplier
 	 */
-	public static BigDecimal getVacationPayMultiplier(int vacationDays) {
+	public static BigDecimal getLomaPalkkaKerroin(int vacationDays) {
 		double multiplier;
 		switch (vacationDays) {
 		case 2:

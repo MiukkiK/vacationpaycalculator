@@ -42,17 +42,18 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * 
 		 * Expected: null
 		 */
-		assertEquals("Incorrect vacation day calculation method", null, calculator.getVacationDayMethod());
-		assertEquals("Incorrect category", null, calculator.getCategory());
-		assertEquals("Incorrect amount of vacation applicable months", 0, calculator.getApplicableMonths());
-		assertEquals("Incorrect amount of vacation days", 0, calculator.getVacationDays());
+		assertEquals("Lomapäivälaskutapa should be null", null, calculator.getLomaPaivaLaskuTapa());
+		assertEquals("Lomapalkkalaskutapa should be null", null, calculator.getLomaPalkkaLaskuTapa());
+		assertEquals("Lomanmääräytymiskuukaudet should be zero", 0, calculator.getLomanMaaraytymisKuukaudet());
+		assertEquals("Lomapäivät should be zero", 0, calculator.getLomaPaivat());
 		
 		/*
 		 * Testisyötteessä on 195 työpäivää. Niihin on laskettu päivät joilla on työtunteja, mutta ei merkintöjä "arkipyhäkorvauksista"
 		 * 
 		 * Expected: 195
 		 */
-		assertEquals("Incorrect amount of work days", 0, calculator.getTotalWorkDays().compareTo(new BigDecimal(195)));
+		
+		assertEquals("Incorrect amount of work days", 0, calculator.getTyoPaivatYhteensa().compareTo(new BigDecimal(195)));
 		
 		/*
 		 * Vuosilomalaki 18.3.2005/162: §12
@@ -68,7 +69,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * Testitapauksessa on 36 poissaolopäivää, joilta maksetaan keskipäiväpalkan verran prosentuaalista korvausta.
 		 * Expected: 72.631 * 36 (2650.72(716)
 		 */
-		assertEquals("Total missed pay does not match", 0, calculator.getMissedPay().compareTo(calculator.getAverageDailyPay().multiply(calculator.getTotalLeaveDays())));
+		assertEquals("Total missed pay does not match", 0, calculator.getSaamattaJaanytPalkka().compareTo(calculator.getPaivaPalkkaKeskiarvo().multiply(calculator.getLomaPaivatYhteensa())));
 		
 		/*
 		 * PAM Kaupan alan TES: §20 8.
@@ -80,7 +81,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * Testitapauksessa työntekijä on ollut kirjoilla vuodesta 2008. Isompaan prosenttiin riittää 1.4.2009 lähtien kirjoilla oleminen.
 		 * Expected: 0.125 (12.5%)
 		 */
-		assertEquals("Incorrect percentile multiplier", 0, calculator.getPercentileMultiplier().compareTo(new BigDecimal("12.5").divide(new BigDecimal(100))));
+		assertEquals("Incorrect percentile multiplier", 0, calculator.getKorvausProsentti().compareTo(new BigDecimal("12.5")));
 		
 		/* PAM Kaupan alan TES: §21
 		 * Lomaraha on 50 % vuosilomalain mukaan ansaittua lomaa vastaavasta lomapalkasta.
@@ -92,10 +93,10 @@ public class VacationPayCalculatorTest extends TestCase {
 		 *  Jos työntekijällä ei ole lomapäiviä, ei työntekijällä ole oikeutta lomarahaan.
 		 *  
 		 */
-		assertEquals("Incorrect state for vacation bonus eligibility", false, calculator.isEligibleForVacationBonus());
+		assertEquals("Incorrect state for vacation bonus eligibility", false, calculator.oikeusLomaRahaan());
 		
-		assertEquals("Total percentile pay does not match", 0, calculator.getPercentilePayTotal().compareTo(new BigDecimal(14358)));
-		assertEquals("Incorrect amount of leave days", 0, calculator.getTotalLeaveDays().compareTo(new BigDecimal(36)));		
+		assertEquals("Total percentile pay does not match", 0, calculator.getLomaKorvausYhteensa().compareTo(new BigDecimal(14358)));
+		assertEquals("Incorrect amount of leave days", 0, calculator.getLomaPaivatYhteensa().compareTo(new BigDecimal(36)));		
 	}
 	
 	public void testCaseB() {
@@ -120,7 +121,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * 
 		 * Expected: VacationDayMethod.HOURS
 		 */
-		assertEquals("Incorrect vacation day calculation method", VacationPayCalculator.VacationDayMethod.HOURS, calculator.getVacationDayMethod());
+		assertEquals("Incorrect vacation day calculation method", VacationPayCalculator.VacationDayMethod.TUNNIT, calculator.getLomaPaivaLaskuTapa());
 
 		/*
 		 * Vuosilomalaki 18.3.2005/162: §11
@@ -132,7 +133,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * 
 		 * Exptected: Category.DAILY_PAY
 		 */		
-		assertEquals("Incorrect category", VacationPayCalculator.Category.DAILY_PAY, calculator.getCategory());
+		assertEquals("Incorrect category", VacationPayCalculator.Category.PAIVAKOHTAINEN, calculator.getLomaPalkkaLaskuTapa());
 
 		/*
 		 * Vuosilomalaki 18.3.2005/162: §6
@@ -150,7 +151,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * 
 		 * Expected: 12
 		 */
-		assertEquals("Incorrect amount of vacation applicable months", 12, calculator.getApplicableMonths());
+		assertEquals("Incorrect amount of vacation applicable months", 12, calculator.getLomanMaaraytymisKuukaudet());
 		
 		/* 
 		 * Vuosilomalaki 18.3.2005/162: §5
@@ -162,15 +163,15 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * 
 		 * Expected: 2.5
 		 */
-		assertEquals("Incorrect vacation day modifier", new BigDecimal("2.5"), calculator.getVacationDaysPerApplicableMonth());
-		assertEquals("Incorrect amount of vacation days", 30, calculator.getVacationDays());
+		assertEquals("Incorrect vacation day modifier", new BigDecimal("2.5"), calculator.getLomaPaivatPerMaaraytymisKuukausi());
+		assertEquals("Incorrect amount of vacation days", 30, calculator.getLomaPaivat());
 		
 		/*
 		 * Testisyötteessä on 195 työpäivää. Niihin on laskettu päivät joilla on työtunteja, mutta ei merkintöjä "arkipyhäkorvauksista"
 		 * 
 		 * Expected: 195
 		 */		
-		assertEquals("Incorrect amount of work days", 0, calculator.getTotalWorkDays().compareTo(new BigDecimal(195)));
+		assertEquals("Incorrect amount of work days", 0, calculator.getTyoPaivatYhteensa().compareTo(new BigDecimal(195)));
 		
 		/*
 		 * Vuosilomalaki 18.3.2005/162: 
@@ -184,7 +185,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * Keskimääräinen päiväpalkka saadaan jakamalla ansaittu tulo työpäivien määrällä.
 		 * Expected: 14358 / 195 (~73.63(631))
 		 */
-		assertEquals("Average daily pay does not match", 0, calculator.getAverageDailyPay().compareTo(new BigDecimal(14358).divide(new BigDecimal(195), 3, RoundingMode.HALF_UP)));
+		assertEquals("Average daily pay does not match", 0, calculator.getPaivaPalkkaKeskiarvo().compareTo(new BigDecimal(14358).divide(new BigDecimal(195), 3, RoundingMode.HALF_UP)));
 
 		/*
 		 * Vuosilomalaki 18.3.2005/162: §11
@@ -204,7 +205,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * Kerroin on määritelty vuosilomalaissa, se on epälineaarinen ~0.9 per päivä asteikko. 30 päivää vastaava luku on 27.8
 		 * Expected: 27.8
 		 */
-		assertEquals("Incorrect vacation pay multiplier", 0, calculator.getVacationPayMultiplier().compareTo(new BigDecimal("27.8")));
+		assertEquals("Incorrect vacation pay multiplier", 0, calculator.getLomaPalkkaKerroin().compareTo(new BigDecimal("27.8")));
 		
 		/*
 		 * Vuosilomalaki 18.3.2005/162: §12
@@ -220,7 +221,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * Testitapauksessa on 36 poissaolopäivää, joilta maksetaan keskipäiväpalkan verran prosentuaalista korvausta.
 		 * Expected: 72.631 * 36 (2650.72(716)
 		 */
-		assertEquals("Total missed pay does not match", 0, calculator.getMissedPay().compareTo(calculator.getAverageDailyPay().multiply(calculator.getTotalLeaveDays())));
+		assertEquals("Total missed pay does not match", 0, calculator.getSaamattaJaanytPalkka().compareTo(calculator.getPaivaPalkkaKeskiarvo().multiply(calculator.getLomaPaivatYhteensa())));
 		
 		/*
 		 * PAM Kaupan alan TES: §20 8.
@@ -238,7 +239,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * Tässä tapauksessa työssäolon veroisista poissaoloista maksetaan vastaava palkka ja se vaikuttaa lomapalkkaan prosenttikertoimella.
 		 * Expected: 0.125 (12.5%)
 		 */
-		assertEquals("Incorrect percentile multiplier", 0, calculator.getPercentileMultiplier().compareTo(new BigDecimal("12.5").divide(new BigDecimal(100))));
+		assertEquals("Incorrect percentile multiplier", 0, calculator.getKorvausProsentti().compareTo(new BigDecimal("12.5")));
 		
 		/* PAM Kaupan alan TES: §21
 		 * Lomaraha on 50 % vuosilomalain mukaan ansaittua lomaa vastaavasta lomapalkasta.
@@ -250,12 +251,12 @@ public class VacationPayCalculatorTest extends TestCase {
 		 *  Testidata ei ota kantaa lomien aloitusaikaan, joten voimme päätellä vain lomarahan suuruuden, 50% lomapäivistä saadusta lomapalkasta.
 		 *  Expected: 2046.9418) / 2 (1023.4709)
 		 */
-		System.out.println(calculator.getVacationPay());
-		assertEquals("Incorrect state for vacation bonus eligibility", true, calculator.isEligibleForVacationBonus());
-		assertEquals("Vacation bonus does not match", 0, calculator.getVacationBonus().compareTo(new BigDecimal("2046.9418").divide(new BigDecimal(2))));
+		System.out.println(calculator.getLomaPalkka());
+		assertEquals("Incorrect state for vacation bonus eligibility", true, calculator.oikeusLomaRahaan());
+		assertEquals("Vacation bonus does not match", 0, calculator.getLomaRaha().compareTo(new BigDecimal("2046.9418").divide(new BigDecimal(2))));
 		
-		assertEquals("Total pay does not match", 0, calculator.getTotalPay().compareTo(new BigDecimal(14358)));
-		assertEquals("Total percentile pay does not match", 0, calculator.getPercentilePayTotal().compareTo(new BigDecimal(0)));
+		assertEquals("Total pay does not match", 0, calculator.getPalkkaYhteensa().compareTo(new BigDecimal(14358)));
+		assertEquals("Total percentile pay does not match", 0, calculator.getLomaKorvausYhteensa().compareTo(new BigDecimal(0)));
 	}
 	public void testBasicVacationPay() {
 		EmployeeRecord record = new EmployeeRecord(LocalDate.of(2000, 1, 1), new BigDecimal(10));
@@ -270,11 +271,11 @@ public class VacationPayCalculatorTest extends TestCase {
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2000);
 
-		assertEquals("Total pay does not match", 0, calculator.getTotalPay().compareTo(new BigDecimal(500)));
-		assertEquals("Incorrect amount of vacation days", 2, calculator.getVacationDays());
-		assertEquals("Incorrect category", VacationPayCalculator.Category.DAILY_PAY, calculator.getCategory());
-		assertEquals("Average daily pay does not match", 0, calculator.getAverageDailyPay().compareTo(new BigDecimal(100)));
-		assertEquals("Vacation pay does not match", 0, calculator.getVacationPay().compareTo(new BigDecimal(180)));
+		assertEquals("Total pay does not match", 0, calculator.getPalkkaYhteensa().compareTo(new BigDecimal(500)));
+		assertEquals("Incorrect amount of vacation days", 2, calculator.getLomaPaivat());
+		assertEquals("Incorrect category", VacationPayCalculator.Category.PAIVAKOHTAINEN, calculator.getLomaPalkkaLaskuTapa());
+		assertEquals("Average daily pay does not match", 0, calculator.getPaivaPalkkaKeskiarvo().compareTo(new BigDecimal(100)));
+		assertEquals("Vacation pay does not match", 0, calculator.getLomaPalkka().compareTo(new BigDecimal(180)));
 	}
 
 	public void testNotEnoughWorkHours() {
@@ -291,9 +292,9 @@ public class VacationPayCalculatorTest extends TestCase {
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2000);
 		
-		assertEquals("Incorrect category", null, calculator.getCategory());
-		assertEquals("Vacation pay in incorrect category (daily pay)", 0, calculator.getVacationPay().compareTo(BigDecimal.ZERO));
-		assertEquals("Percentile pay does not match", 0, calculator.getPercentileVacationPay().compareTo(new BigDecimal(50)));
+		assertEquals("Incorrect category", null, calculator.getLomaPalkkaLaskuTapa());
+		assertEquals("Vacation pay in incorrect category (daily pay)", 0, calculator.getLomaPalkka().compareTo(BigDecimal.ZERO));
+		assertEquals("Percentile pay does not match", 0, calculator.getLomaKorvaus().compareTo(new BigDecimal(50)));
 	}
 
 	public void testNotEnoughActualHours() {
@@ -309,8 +310,8 @@ public class VacationPayCalculatorTest extends TestCase {
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2000);
 		
-		assertEquals("Vacation pay in incorrect category (daily pay)", 0, calculator.getVacationPay().compareTo(BigDecimal.ZERO));
-		assertEquals("Percentile pay does not match", 0, calculator.getPercentileVacationPay().compareTo(new BigDecimal(32)));
+		assertEquals("Vacation pay in incorrect category (daily pay)", 0, calculator.getLomaPalkka().compareTo(BigDecimal.ZERO));
+		assertEquals("Percentile pay does not match", 0, calculator.getLomaKorvaus().compareTo(new BigDecimal(32)));
 	}
 	
 	public void testNotEnoughWorkDays() {
@@ -337,10 +338,10 @@ public class VacationPayCalculatorTest extends TestCase {
 		list.add(new EmploymentData(LocalDate.of(2000, 1, 17), "", new BigDecimal(8), BigDecimal.ZERO));
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2000);
-		assertEquals("Category does not match", null, calculator.getCategory());
+		assertEquals("Category does not match", null, calculator.getLomaPalkkaLaskuTapa());
 		
-		assertEquals("Vacation pay in incorrect category", 0, calculator.getVacationPay().compareTo(BigDecimal.ZERO));
-		assertEquals("Percentile pay does not match", 0, calculator.getPercentileVacationPay().compareTo(new BigDecimal(128)));
+		assertEquals("Vacation pay in incorrect category", 0, calculator.getLomaPalkka().compareTo(BigDecimal.ZERO));
+		assertEquals("Percentile pay does not match", 0, calculator.getLomaKorvaus().compareTo(new BigDecimal(128)));
 	}
 	
 	public void testNotEnoughActualDays() {
@@ -364,8 +365,8 @@ public class VacationPayCalculatorTest extends TestCase {
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2000);
 		
-		assertEquals("Vacation pay in incorrect category", 0, calculator.getVacationPay().compareTo(BigDecimal.ZERO));
-		assertEquals("Percentile pay does not match", 0, calculator.getPercentileVacationPay().compareTo(new BigDecimal(96)));
+		assertEquals("Vacation pay in incorrect category", 0, calculator.getLomaPalkka().compareTo(BigDecimal.ZERO));
+		assertEquals("Percentile pay does not match", 0, calculator.getLomaKorvaus().compareTo(new BigDecimal(96)));
 	}
 	
 	public void testWorkDaysWithPaidLeave() {
@@ -393,9 +394,9 @@ public class VacationPayCalculatorTest extends TestCase {
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2000);
 
-		assertEquals("Incorrect category", VacationPayCalculator.Category.DAILY_PAY, calculator.getCategory());
-		assertEquals("Vacation pay does not match", 0, calculator.getVacationPay().compareTo(new BigDecimal("144")));
-		assertEquals("Percentile pay does not match", 0, calculator.getPercentileVacationPay().compareTo(new BigDecimal(32)));
+		assertEquals("Incorrect category", VacationPayCalculator.Category.PAIVAKOHTAINEN, calculator.getLomaPalkkaLaskuTapa());
+		assertEquals("Vacation pay does not match", 0, calculator.getLomaPalkka().compareTo(new BigDecimal("144")));
+		assertEquals("Percentile pay does not match", 0, calculator.getLomaKorvaus().compareTo(new BigDecimal(32)));
 	}
 	
 	public void testNonintegerVacationDays() {
@@ -412,8 +413,8 @@ public class VacationPayCalculatorTest extends TestCase {
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2001);
 
-		assertEquals("Incorrect amount of vacation days", 3, calculator.getVacationDays());
-		assertEquals("Vacation pay does not match", 0, calculator.getVacationPay().compareTo(new BigDecimal(270)));
+		assertEquals("Incorrect amount of vacation days", 3, calculator.getLomaPaivat());
+		assertEquals("Vacation pay does not match", 0, calculator.getLomaPalkka().compareTo(new BigDecimal(270)));
 	}
 
 	public void testBasicSalariedVacationPay() {
@@ -424,11 +425,11 @@ public class VacationPayCalculatorTest extends TestCase {
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2001);
 		
-		assertEquals("Incorrect amount of weekly workdays", 0, calculator.getMonthlyWorkDays().compareTo(new BigDecimal(5).multiply(new BigDecimal(4))));
-		assertEquals("Incorrect amount of vacation days", 30, calculator.getVacationDays());
-		assertEquals("Incorrect category", VacationPayCalculator.Category.SALARIED, calculator.getCategory());
-		assertEquals("Vacation pay does not match", 0, calculator.getVacationPay().compareTo(new BigDecimal(1500)));
-		assertEquals("Vacation pay in incorrect category (percentile)", 0, calculator.getPercentileVacationPay().compareTo(BigDecimal.ZERO));
+		assertEquals("Incorrect amount of weekly workdays", 0, calculator.getKuukausiTyoPaivat().compareTo(new BigDecimal(5).multiply(new BigDecimal(4))));
+		assertEquals("Incorrect amount of vacation days", 30, calculator.getLomaPaivat());
+		assertEquals("Incorrect category", VacationPayCalculator.Category.KUUKAUSIPALKALLINEN, calculator.getLomaPalkkaLaskuTapa());
+		assertEquals("Vacation pay does not match", 0, calculator.getLomaPalkka().compareTo(new BigDecimal(1500)));
+		assertEquals("Vacation pay in incorrect category (percentile)", 0, calculator.getLomaKorvaus().compareTo(BigDecimal.ZERO));
 	}
 	
 	public void testSalariedNotEnoughDays() {
@@ -439,9 +440,9 @@ public class VacationPayCalculatorTest extends TestCase {
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2001);
 		
-		assertEquals("Incorrect category", null, calculator.getCategory());
-		assertEquals("Incorrect amount of vacation days", 0, calculator.getVacationDays());
-		assertEquals("Vacation pay in incorrect category (salaried)", null, calculator.getVacationPay());
-		assertEquals("Vacation pay does not match", 0, calculator.getPercentileVacationPay().compareTo(new BigDecimal(900)));
+		assertEquals("Incorrect category", null, calculator.getLomaPalkkaLaskuTapa());
+		assertEquals("Incorrect amount of vacation days", 0, calculator.getLomaPaivat());
+		assertEquals("Vacation pay in incorrect category (salaried)", null, calculator.getLomaPalkka());
+		assertEquals("Vacation pay does not match", 0, calculator.getLomaKorvaus().compareTo(new BigDecimal(900)));
 	}
 }
