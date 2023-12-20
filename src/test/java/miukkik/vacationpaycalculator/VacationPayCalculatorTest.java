@@ -33,6 +33,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * aikana työntekijälle on kertynyt vähintään 35 työtuntia tai 7 §:ssä tarkoitettua 
 		 * työssäolon veroista tuntia.
 		 * 
+		 * -----
 		 * Jos työsopimuksessa ei ole sovittu päiviä, lasketaan tuntisäännön perusteella.
 		 * 
 		 * Expected: TUNNIT
@@ -48,6 +49,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * työssäolon veroisina pidetään kuitenkin vain neljä päivää ylittäviä vapaapäiviä, 
 		 * jollei vapaata ole annettu yli kuuden arkipäivän pituisena yhtenäisenä vapaana.
 		 * 
+		 * -----
 		 * Työntekijällä on työssäolon veroisiksi laskettavia poissaoloja, mutta koska sopimuksessa
 		 * ei ole määritetty tunteja, niitä ei huomioida. Ilman poissaoloja työntekijällä on 10
 		 * lomapäivien kertymään oikeuttavaa kuukautta.
@@ -62,6 +64,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * Jos työsuhde on lomanmääräytymisvuoden loppuun mennessä jatkunut yhdenjaksoisesti alle vuoden, 
 		 * työntekijällä on kuitenkin oikeus saada lomaa kaksi arkipäivää kultakin täydeltä lomanmääräytymiskuukaudelta. 
 		 * 
+		 * -----
 		 * Työntekijä on ollut työsuhteessa vuodesta 2008, ja isompi kerroin täyttyy maaliskuussa 2009.
 		 * 
 		 * Expected:
@@ -80,6 +83,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * joka sopimuksen mukaan työskentelee vähintään 14 päivänä kalenterikuukaudessa, lasketaan
 		 * kertomalla hänen keskipäiväpalkkansa lomapäivien määrän perusteella määräytyvällä kertoimella.
 		 * 
+		 * -----
 		 * Jos työntekijä ei ole kuukausipalkkainen ja hänellä on lomapäiviä, lomapalkka lasketaan keskipäiväpalkan pohjalta.
 		 * 
 		 * Expected: Category.PAIVAKOHTAINEN
@@ -88,6 +92,7 @@ public class VacationPayCalculatorTest extends TestCase {
 
 		/*
 		 * Testisyötteessä on 195 työpäivää. Niihin on laskettu päivät joilla on työtunteja, mutta ei merkintöjä "arkipyhäkorvauksista"
+		 * Esimerkkisyötteessä ei ole yli- tai hätätyötunteja, joten ne eivät koske lopputulosta.
 		 * 
 		 * Expected: 195
 		 */
@@ -99,17 +104,16 @@ public class VacationPayCalculatorTest extends TestCase {
 		BigDecimal testPoissaOloPaivat = new BigDecimal(36);
 		bigDecimalAssert("Poissaolopäivät", assertPoissaOloPaivat, testPoissaOloPaivat);
 
+		
 		/*
 		 * Vuosilomalaki 18.3.2005/162: §12
-		 * Muun kuin viikko- tai kuukausipalkalla alle 14 päivänä kalenterikuukaudessa työtä tekevän työntekijän vuosilomapalkka
-		 * on 9 prosenttia taikka työsuhteen jatkuttua lomakautta edeltävän lomanmääräytymisvuoden loppuun mennessä vähintään vuoden
-		 * 11,5 prosenttia lomanmääräytymisvuoden aikana työssäolon ajalta maksetusta tai maksettavaksi erääntyneestä palkasta lukuun
-		 * ottamatta hätätyöstä ja lain tai sopimuksen mukaisesta ylityöstä maksettavaa korotusta. 
+		 * ...
 		 * 
 		 * Jos työntekijä on lomanmääräytymisvuoden aikana ollut estynyt tekemästä työtä 7 §:n 2 momentin 1–4 tai 
 		 * 7 kohdassa tarkoitetusta syystä, vuosilomapalkan perusteena olevaan palkkaan lisätään laskennallisesti poissaoloajalta 
 		 * saamatta jäänyt palkka enintään 7 §:n 3 momentissa säädetyltä ajalta.
 		 * 
+		 * -----
 		 * Testitapauksessa on 36 poissaolopäivää, joilta maksetaan keskipäiväpalkan verran prosentuaalista korvausta.
 		 * 
 		 * Expected: 72.631 * 36 (2650.72(716)
@@ -118,9 +122,23 @@ public class VacationPayCalculatorTest extends TestCase {
 		BigDecimal testSaamattaJaanytPalkka = calculator.getSaamattaJaanytPalkka();
 		bigDecimalAssert("Saamatta jäänyt palkka", assertSaamattaJaanytPalkka, testSaamattaJaanytPalkka);		
 
+		/* PAM Kaupan alan TES, §20 8.
+		 * Lomapalkka tai -korvaus on sekä tuntipalkkaisella että suhteutettua
+		 * kuukausipalkkaa saavalla jäljempänä esitetystä lomanmääräytymisvuoden ansiosta:
+		 * 10 % työsuhteen kestettyä lomanmääräytymisvuoden loppuun (31.3.) mennessä alle vuoden
+		 * 12,5 % työsuhteen kestettyä lomanmääräytymisvuoden loppuun (31.3.) mennessä vähintään vuoden.
+		 * 
+		 * -----
+		 * Työntekijä on ollut työsuhteessa yli 1 vuoden, joten kerroin on 12.5%.
+		 * Lomakorvausta tulee kahdelta kuukaudelta joista ei kertynyt lomapäiviä.
+		 * 
+		 * Expected:
+		 * Korvausprosentti - 12.5
+		 * Lomakorvaus - 150
+		 */
 		BigDecimal assertKorvausProsentti = new BigDecimal("12.5");
 		BigDecimal testKorvausProsentti = calculator.getKorvausProsentti();
-		bigDecimalAssert("Korvausprosentti", assertKorvausProsentti, testKorvausProsentti);
+		bigDecimalAssert("Korvausprosentti", assertKorvausProsentti, testKorvausProsentti);	
 		
 		BigDecimal assertLomaKorvaus = new BigDecimal(150);
 		BigDecimal testLomaKorvaus = calculator.getLomaKorvausYhteensa();
@@ -132,6 +150,10 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * Lomaraha maksetaan työntekijän:
 		 *  -aloittaessa loman ilmoitettuna tai sovittuna aikana ja
 		 *  -palatessa työhön heti loman päätyttyä.
+		 *  
+		 *  
+		 *  -----
+		 *  Työntekijä saa lomapalkkaa, joten hänellä on oikeus lomarahaan.
 		 *  
 		 *  expected: true
 		 */
@@ -156,7 +178,8 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * aikana työntekijälle on kertynyt vähintään 35 työtuntia tai 7 §:ssä tarkoitettua 
 		 * työssäolon veroista tuntia.
 		 *
-		 * Jos työsopimuksessa ei ole sovittu päiviä ja työtunteja on sovittu vähintään 35 tuntia kuukaudessa lomapäivät lasketaan 35 tunnin säännön perusteella.
+		 * -----
+		 * Jos työsopimuksessa ei ole sovittu vähintään 14 päivää kuukaudessa, lomapäivät lasketaan 35 tunnin säännön perusteella.
 		 * 
 		 * Expected: VacationDayMethod.TUNNIT
 		 */
@@ -168,6 +191,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * joka sopimuksen mukaan työskentelee vähintään 14 päivänä kalenterikuukaudessa, lasketaan
 		 * kertomalla hänen keskipäiväpalkkansa lomapäivien määrän perusteella määräytyvällä kertoimella.
 		 * 
+		 * -----
 		 * Jos työntekijä ei ole kuukausipalkkainen ja hänellä on lomapäiviä, lomapalkka lasketaan keskipäiväpalkan pohjalta.
 		 * 
 		 * Expected: Category.PAIVAKOHTAINEN
@@ -186,6 +210,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * §7
 		 * Työssäolon veroisena pidetään työstä poissaoloaikaa, jolta työnantaja on lain mukaan velvollinen maksamaan työntekijälle palkan.
 		 *
+		 * -----
 		 * Testisyötteessä on kaksi kuukautta jossa ei ole 35 työtuntia, 7/2009 ja 12/2009. Niissä on kuitenkin työssäolon veroisia päiviä korvaamaan vaaditut työtunnit.
 		 * 
 		 * Expected: 12
@@ -198,6 +223,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * Jos työsuhde on lomanmääräytymisvuoden loppuun mennessä jatkunut yhdenjaksoisesti alle vuoden, 
 		 * työntekijällä on kuitenkin oikeus saada lomaa kaksi arkipäivää kultakin täydeltä lomanmääräytymiskuukaudelta. 
 		 * 
+		 * -----
 		 * Työntekijä on ollut työsuhteessa vuodesta 2008, ja isompi kerroin täyttyy maaliskuussa 2009.
 		 * 
 		 * Expected: 
@@ -212,6 +238,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		
 		/*
 		 * Testisyötteessä on 195 työpäivää. Niihin on laskettu päivät joilla on työtunteja, mutta ei merkintöjä "arkipyhäkorvauksista"
+		 * Esimerkkisyötteessä ei ole yli- tai hätätyötunteja, joten ne eivät koske lopputulosta.
 		 * 
 		 * Expected: 195
 		 */		
@@ -219,16 +246,10 @@ public class VacationPayCalculatorTest extends TestCase {
 		BigDecimal testTyoPaivat = calculator.getTyoPaivatYhteensa();
 		bigDecimalAssert("Työpäivät", assertTyoPaivat, testTyoPaivat);
 		
-		/*
-		 * Vuosilomalaki 18.3.2005/162: 
-		 * Jos työntekijän viikoittaisten työpäivien määrä on sopimuksen mukaan pienempi tai suurempi kuin viisi,
-		 * keskipäiväpalkka kerrotaan viikoittaisten työpäivien määrällä ja jaetaan viidellä.
-		 * 
-		 * Testitapauksessa ei ole määritetty työpäiviä joten tämä kohta ei koske testitapausta.
-		 */
-		
+
 		/*
 		 * Keskimääräinen päiväpalkka saadaan jakamalla ansaittu tulo työpäivien määrällä.
+		 * 
 		 * Expected: 14358 / 195 (~73.63(631))
 		 */
 		BigDecimal assertPalkkaKeskiarvo = new BigDecimal(14358).divide(new BigDecimal(195), 3, RoundingMode.HALF_UP);
@@ -236,13 +257,14 @@ public class VacationPayCalculatorTest extends TestCase {
 		bigDecimalAssert("Päiväpalkkakeskiarvo", assertPalkkaKeskiarvo, testPalkkaKeskiarvo);
 
 		/*
-		 * Vuosilomalaki 18.3.2005/162: §11
-		 * ...
+		 * Vuosilomalaki 18.3.2005/162: 
 		 * Jos työntekijän viikoittaisten työpäivien määrä on sopimuksen mukaan pienempi tai suurempi kuin viisi,
 		 * keskipäiväpalkka kerrotaan viikoittaisten työpäivien määrällä ja jaetaan viidellä.
 		 * 
+		 * -----
 		 * Testitapauksessa ei ole määritetty työpäiviä joten tämä kohta ei koske testitapausta.
 		 */
+		
 		
 		/*
 		 * Vuosilomalaki 18.3.2005/162: §11
@@ -250,7 +272,9 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * joka sopimuksen mukaan työskentelee vähintään 14 päivänä kalenterikuukaudessa, lasketaan kertomalla 
 		 * hänen keskipäiväpalkkansa lomapäivien määrän perusteella määräytyvällä kertoimella.
 		 * 
+		 * -----
 		 * Kerroin on määritelty vuosilomalaissa, se on epälineaarinen ~0.9 per päivä asteikko. 30 päivää vastaava luku on 27.8
+		 * 
 		 * Expected: 27.8
 		 */
 		BigDecimal assertLomaPalkkaKerroin = new BigDecimal("27.8");
@@ -259,16 +283,15 @@ public class VacationPayCalculatorTest extends TestCase {
 		
 		/*
 		 * Vuosilomalaki 18.3.2005/162: §12
-		 * Muun kuin viikko- tai kuukausipalkalla alle 14 päivänä kalenterikuukaudessa työtä tekevän työntekijän vuosilomapalkka
-		 * on 9 prosenttia taikka työsuhteen jatkuttua lomakautta edeltävän lomanmääräytymisvuoden loppuun mennessä vähintään vuoden
-		 * 11,5 prosenttia lomanmääräytymisvuoden aikana työssäolon ajalta maksetusta tai maksettavaksi erääntyneestä palkasta lukuun
-		 * ottamatta hätätyöstä ja lain tai sopimuksen mukaisesta ylityöstä maksettavaa korotusta. 
 		 * 
+		 * ...
 		 * Jos työntekijä on lomanmääräytymisvuoden aikana ollut estynyt tekemästä työtä 7 §:n 2 momentin 1–4 tai 
 		 * 7 kohdassa tarkoitetusta syystä, vuosilomapalkan perusteena olevaan palkkaan lisätään laskennallisesti poissaoloajalta 
 		 * saamatta jäänyt palkka enintään 7 §:n 3 momentissa säädetyltä ajalta.
 		 * 
+		 * -----
 		 * Testitapauksessa on 36 poissaolopäivää, joilta maksetaan keskipäiväpalkan verran prosentuaalista korvausta.
+		 * 
 		 * Expected: 72.631 * 36 (2650.72(716)
 		 */
 		BigDecimal assertSaamattaJaanytPalkka = calculator.getPaivaPalkkaKeskiarvo().multiply(calculator.getPoissaOloPaivatYhteensa());
@@ -287,9 +310,11 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * Jos työntekijä on ollut estynyt tekemästä työtä raskaus-, erityisraskaus- tai vanhempainvapaan vuoksi,
 		 * lomakorvauksen perusteena olevaan palkkaan lisätään poissaolon ajalta saamatta jäänyt palkka noudattaen 12 §:n 2 momenttia.
 		 * 
+		 * ------
 		 * Testitapauksessa työntekijä on ollut kirjoilla vuodesta 2008. Isompaan prosenttiin riittää 1.4.2009 lähtien kirjoilla oleminen.
 		 * Tässä tapauksessa työssäolon veroisista poissaoloista maksetaan vastaava palkka ja se vaikuttaa lomapalkkaan prosenttikertoimella.
-		 * Expected: 0.125 (12.5%)
+		 * 
+		 * Expected: 12.5 (12.5%)
 		 */
 		
 		BigDecimal assertKorvausProsentti = new BigDecimal("12.5");
@@ -303,11 +328,20 @@ public class VacationPayCalculatorTest extends TestCase {
 		 *  -aloittaessa loman ilmoitettuna tai sovittuna aikana ja
 		 *  -palatessa työhön heti loman päätyttyä.
 		 *  
+		 *  -----
 		 *  Testidata ei ota kantaa lomien aloitusaikaan, joten voimme päätellä vain lomarahan suuruuden, 50% lomapäivistä saadusta lomapalkasta.
-		 *  Expected: 2046.9418) / 2 (1023.4709)
+		 *  
+		 *  Expected: 
+		 *  Lomakorvaus (kuukausilta joista ei saatu lomapäiviä) - 0
+		 *  Lomarahaoikeus - true
+		 *  Lomaraha - 2046.9418) / 2 (1023.4709)
 		 */
 
 		assertEquals("Lomarahaoikeus", true, calculator.oikeusLomaRahaan());
+	
+		BigDecimal assertLomaKorvaus = BigDecimal.ZERO;
+		BigDecimal testLomaKorvaus = calculator.getLomaKorvausYhteensa();
+		bigDecimalAssert("Lomakorvaus", assertLomaKorvaus, testLomaKorvaus);
 		
 		BigDecimal assertLomaRaha = calculator.getLomaPalkka().divide(new BigDecimal(2));
 		BigDecimal testLomaRaha = calculator.getLomaRaha();
@@ -317,9 +351,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		BigDecimal testPalkka = calculator.getPalkkaYhteensa();
 		bigDecimalAssert("Palkka", assertPalkka, testPalkka);
 		
-		BigDecimal assertLomaKorvaus = BigDecimal.ZERO;
-		BigDecimal testLomaKorvaus = calculator.getLomaKorvausYhteensa();
-		bigDecimalAssert("Lomakorvaus", assertLomaKorvaus, testLomaKorvaus);
+		
 	}
 	public void testBasicVacationPay() {
 		EmployeeRecord record = new EmployeeRecord(LocalDate.of(2000, 1, 1), new BigDecimal(10));
