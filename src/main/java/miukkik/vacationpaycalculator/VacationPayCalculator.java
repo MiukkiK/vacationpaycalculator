@@ -21,7 +21,7 @@ public class VacationPayCalculator {
 
 	private final BigDecimal[] kuukaudenTyoTunnit = new BigDecimal[12];
 	private final BigDecimal[] kuukaudenTyoPaivat = new BigDecimal[12];
-	private final BigDecimal[] kuukaudenLomaPaivat = new BigDecimal[12];
+	private final BigDecimal[] kuukaudenPoissaOloPaivat = new BigDecimal[12];
 	private final BigDecimal[] kuukaudenPalkka = new BigDecimal[12];
 
 	private EmployeeRecord record;
@@ -30,7 +30,7 @@ public class VacationPayCalculator {
 	private BigDecimal lomaPaivatPerMaaraytymisKuukausi;
 	private int lomaPaivat;
 	
-	private BigDecimal lomaPaivatYhteensa;
+	private BigDecimal poissaOloPaivatYhteensa;
 	private BigDecimal paivaPalkkaKeskiarvo;
 
 	private boolean lomaRahaOikeus;
@@ -82,6 +82,7 @@ public class VacationPayCalculator {
 		 * aikana työntekijälle on kertynyt vähintään 35 työtuntia tai 7 §:ssä tarkoitettua 
 		 * työssäolon veroista tuntia.
 		 */
+		
 		ChangeList dayChanges = record.getWorkDayChanges();
 		if (!dayChanges.getDataBetween(startDate, endDate).isEmpty()) {
 			sovitutPaivatMuuttuneet = true;
@@ -90,12 +91,15 @@ public class VacationPayCalculator {
 		} else {
 			sovitutPaivatMuuttuneet = false;
 			BigDecimal unchangedDays = dayChanges.getValueOn(endDate).multiply(new BigDecimal(4));
+			
+			if (unchangedDays.compareTo(Rules.getKuukausiPaivaVaatimus()) != -1) {
+				lomaPaivaLaskuTapa = VacationDayMethod.PAIVAT;
+			} else lomaPaivaLaskuTapa = VacationDayMethod.TUNNIT;
+			
 			for (int i=0; i < 12; i++) {
 				sovitutPaivat[i] = unchangedDays;
 			}
-			if (unchangedDays.multiply(new BigDecimal(4)).compareTo(Rules.getKuukausiPaivaVaatimus()) != -1) {
-				lomaPaivaLaskuTapa = VacationDayMethod.PAIVAT;
-			}
+			
 		}
 		
 		ChangeList hourChanges = record.getWorkHourChanges();
@@ -106,9 +110,6 @@ public class VacationPayCalculator {
 			BigDecimal unchangedHours = hourChanges.getValueOn(endDate).multiply(new BigDecimal(4));
 			for (int i=0; i < 12; i++) {
 				sovitutTunnit[i] = unchangedHours;
-			}
-			if (unchangedHours.multiply(new BigDecimal(4)).compareTo(Rules.getKuukausiTuntiVaatimus()) != -1) {
-				lomaPaivaLaskuTapa = VacationDayMethod.TUNNIT;
 			}
 		}
 
@@ -143,8 +144,8 @@ public class VacationPayCalculator {
 				 * tilapäisen hoitovapaan ajalta (työsopimuslain 4:6 §)
 				 */
 				if (!data.getInfo().equals("")) { // days with info are not added as regular workdays or add to vacation total hour count. (weekday holiday bonus)
-					if (kuukaudenLomaPaivat[monthIndex] == null) kuukaudenLomaPaivat[monthIndex] = BigDecimal.ZERO;
-					if (data.getHours() == BigDecimal.ZERO) kuukaudenLomaPaivat[monthIndex] = kuukaudenLomaPaivat[monthIndex].add(BigDecimal.ONE); // days with info and no hours are treated as valid leave days, limited leave such as sick leave not implememnted yet.
+					if (kuukaudenPoissaOloPaivat[monthIndex] == null) kuukaudenPoissaOloPaivat[monthIndex] = BigDecimal.ZERO;
+					if (data.getHours() == BigDecimal.ZERO) kuukaudenPoissaOloPaivat[monthIndex] = kuukaudenPoissaOloPaivat[monthIndex].add(BigDecimal.ONE); // days with info and no hours are treated as valid leave days, limited leave such as sick leave not implememnted yet.
 				} else  {	
 					if (kuukaudenTyoPaivat[monthIndex] == null) kuukaudenTyoPaivat[monthIndex] = BigDecimal.ZERO;
 					kuukaudenTyoPaivat[monthIndex] = kuukaudenTyoPaivat[monthIndex].add(BigDecimal.ONE);
@@ -177,7 +178,7 @@ public class VacationPayCalculator {
 			if (kuukaudenTyoTunnit[i] == null) kuukaudenTyoTunnit[i] = BigDecimal.ZERO;
 			if (kuukaudenPalkka[i] == null) kuukaudenPalkka[i] = BigDecimal.ZERO;		
 			if (kuukaudenTyoPaivat[i] == null) kuukaudenTyoPaivat[i] = BigDecimal.ZERO;
-			if (kuukaudenLomaPaivat[i] == null) kuukaudenLomaPaivat[i] = BigDecimal.ZERO;
+			if (kuukaudenPoissaOloPaivat[i] == null) kuukaudenPoissaOloPaivat[i] = BigDecimal.ZERO;
 		
 			/*
 			 * Vuosilomalaki 18.3.2005/162: §6
@@ -188,12 +189,13 @@ public class VacationPayCalculator {
 			 * aikana työntekijälle on kertynyt vähintään 35 työtuntia tai 7 §:ssä tarkoitettua 
 			 * työssäolon veroista tuntia.
 			 */
-			if ((sovitutPaivat[i].compareTo(Rules.getKuukausiPaivaVaatimus()) != -1) && 
-					(kuukaudenTyoPaivat[i].add(kuukaudenLomaPaivat[i]).compareTo(Rules.getKuukausiPaivaVaatimus()) != -1))
+			if ((lomaPaivaLaskuTapa == VacationDayMethod.PAIVAT) &&
+					(sovitutPaivat[i].compareTo(Rules.getKuukausiPaivaVaatimus()) != -1) && 
+					(kuukaudenTyoPaivat[i].add(kuukaudenPoissaOloPaivat[i]).compareTo(Rules.getKuukausiPaivaVaatimus()) != -1))
 				lomanMaaraytymisKuukaudet++;
 			// Add leave days as proportionate hours as planned weekly hours / 5 per day
-			else if ((sovitutTunnit[i].compareTo(Rules.getKuukausiTuntiVaatimus()) != -1) && 
-					(kuukaudenLomaPaivat[i].divide(new BigDecimal(5)).multiply(sovitutTunnit[i]).add(kuukaudenTyoTunnit[i]).compareTo(Rules.getKuukausiTuntiVaatimus()) != -1))
+			else if ((lomaPaivaLaskuTapa == VacationDayMethod.TUNNIT) &&
+					(kuukaudenPoissaOloPaivat[i].divide(new BigDecimal(5)).multiply(sovitutTunnit[i]).add(kuukaudenTyoTunnit[i]).compareTo(Rules.getKuukausiTuntiVaatimus()) != -1))
 				lomanMaaraytymisKuukaudet++;
 			else {
 				lomaKorvausYhteensa = lomaKorvausYhteensa.add(kuukaudenPalkka[i]);
@@ -255,15 +257,15 @@ public class VacationPayCalculator {
 		if (lomaRahaOikeus) lomaRaha = lomaPalkka.divide(new BigDecimal(2));
 		// percentile vacation pay calculation
 
-		lomaPaivatYhteensa = BigDecimal.ZERO;
-		for (BigDecimal leaveThisMonth : kuukaudenLomaPaivat) {
-			lomaPaivatYhteensa = lomaPaivatYhteensa.add(leaveThisMonth);
+		poissaOloPaivatYhteensa = BigDecimal.ZERO;
+		for (BigDecimal leaveThisMonth : kuukaudenPoissaOloPaivat) {
+			poissaOloPaivatYhteensa = poissaOloPaivatYhteensa.add(leaveThisMonth);
 		}
 		lomaKorvaus = BigDecimal.ZERO;
-		if ((lomaKorvausYhteensa != BigDecimal.ZERO) || (lomaPaivatYhteensa != BigDecimal.ZERO)) {
+		if ((lomaKorvausYhteensa != BigDecimal.ZERO) || (poissaOloPaivatYhteensa != BigDecimal.ZERO)) {
 
-			if (lomaPalkkalaskuTapa == Category.KUUKAUSIPALKALLINEN) saamattaJaanytPalkka = lomaPaivatYhteensa.multiply(paivaPalkka); 
-			else saamattaJaanytPalkka = lomaPaivatYhteensa.multiply(paivaPalkkaKeskiarvo);
+			if (lomaPalkkalaskuTapa == Category.KUUKAUSIPALKALLINEN) saamattaJaanytPalkka = poissaOloPaivatYhteensa.multiply(paivaPalkka); 
+			else saamattaJaanytPalkka = poissaOloPaivatYhteensa.multiply(paivaPalkkaKeskiarvo);
 
 			korvausProsentti = Rules.getKorvausProsentti(record.getStartDate(), endDate);
 			lomaKorvaus = lomaKorvausYhteensa.add(saamattaJaanytPalkka).multiply(korvausProsentti).movePointLeft(2);		
@@ -273,7 +275,7 @@ public class VacationPayCalculator {
 	public void printMonthlyInformation() {
 		String[] months = new String[] {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
 		for (int i=0; i < months.length; i++) {
-			System.out.println(months[i] + ": Workdays - " + kuukaudenTyoPaivat[i] + ", Leave days - " + kuukaudenLomaPaivat[i] + ", Work hours - " + kuukaudenTyoTunnit[i] + ", Monthly pay - " + kuukaudenPalkka[i]);
+			System.out.println(months[i] + ": Workdays - " + kuukaudenTyoPaivat[i] + ", Leave days - " + kuukaudenPoissaOloPaivat[i] + ", Work hours - " + kuukaudenTyoTunnit[i] + ", Monthly pay - " + kuukaudenPalkka[i]);
 		}
 		System.out.println("Category is " + lomaPalkkalaskuTapa);
 	}
@@ -310,8 +312,8 @@ public class VacationPayCalculator {
 		return kuukaudenTyoPaivat;
 	}
 
-	public BigDecimal[] getKuukaudenLomaPaivat() {
-		return kuukaudenLomaPaivat;
+	public BigDecimal[] getKuukaudenPoissaOloPaivat() {
+		return kuukaudenPoissaOloPaivat;
 	}
 
 	public BigDecimal[] getKuukaudenPalkka() {
@@ -350,8 +352,8 @@ public class VacationPayCalculator {
 		return tyoPaivatYhteensa;
 	}
 
-	public BigDecimal getLomaPaivatYhteensa() {
-		return lomaPaivatYhteensa;
+	public BigDecimal getPoissaOloPaivatYhteensa() {
+		return poissaOloPaivatYhteensa;
 	}
 	
 	public BigDecimal getTyoPaivatPerViikkoKeskiarvo() {
@@ -401,7 +403,7 @@ public class VacationPayCalculator {
 		}
 		if (lomaKorvaus != BigDecimal.ZERO) {
 			resultString += "Kohtaan 4:\n";
-			resultString += lomaKorvausYhteensa + " € + " + String.format(Locale.ENGLISH, "%.2f", saamattaJaanytPalkka) + " € X " + String.format(Locale.ENGLISH, "%.1f", korvausProsentti.multiply(new BigDecimal(100))) + " % = " + String.format(Locale.ENGLISH, "%.2f", lomaKorvaus) + " €";
+			resultString += lomaKorvausYhteensa + " € + " + String.format(Locale.ENGLISH, "%.2f", saamattaJaanytPalkka) + " € X " + String.format(Locale.ENGLISH, "%.1f", korvausProsentti) + " % = " + String.format(Locale.ENGLISH, "%.2f", lomaKorvaus) + " €";
 		}
 		return resultString;
 	}
