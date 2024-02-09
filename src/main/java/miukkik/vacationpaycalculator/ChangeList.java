@@ -32,6 +32,10 @@ public class ChangeList implements DataInterface<ChangeData>{
 		}
 		return result;
 	}
+	
+	public boolean hasChangedBetween(LocalDate startDate, LocalDate endDate) {
+		return !getDataBetween(startDate, endDate).isEmpty();
+	}
 
 	public BigDecimal getValueOn(LocalDate date) {		
 		BigDecimal result = null;

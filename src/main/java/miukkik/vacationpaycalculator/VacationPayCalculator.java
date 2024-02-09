@@ -13,195 +13,82 @@ import java.util.Locale;
  * @author Mia Kallio
  */
 public class VacationPayCalculator {
-	
-	private final BigDecimal[] sovitutPaivat = new BigDecimal[12];
-	private final BigDecimal[] sovitutTunnit = new BigDecimal[12];
-	private boolean sovitutPaivatMuuttuneet;
-	private VacationDayMethod lomaPaivaLaskuTapa;
-
-	private final BigDecimal[] kuukaudenTyoTunnit = new BigDecimal[12];
-	private final BigDecimal[] kuukaudenTyoPaivat = new BigDecimal[12];
-	private final BigDecimal[] kuukaudenPoissaOloPaivat = new BigDecimal[12];
-	private final BigDecimal[] kuukaudenPalkka = new BigDecimal[12];
 
 	private EmployeeRecord record;
-	
+
+	private LomaPaivienAnsaintaSaanto lomaPaivienAnsaintaSaanto;
+
+	private MonthlyData[] kuukausi;
+
 	private int lomanMaaraytymisKuukaudet;
 	private BigDecimal lomaPaivatPerMaaraytymisKuukausi;
 	private int lomaPaivat;
-	
-	private BigDecimal poissaOloPaivatYhteensa;
+
+	private BigDecimal poissaOlotYhteensa;
 	private BigDecimal paivaPalkkaKeskiarvo;
 
 	private boolean lomaRahaOikeus;
-	
-	private Category lomaPalkkalaskuTapa;
+
+	private LomaPalkkaKaava lomaPalkkaKaava;
+
 	//category 1 fields
 	private BigDecimal kuukausiPalkka;
 	private BigDecimal kuukausiTyoPaivat;
 	private BigDecimal paivaPalkka;
-	private BigDecimal lomaPalkka;
 
 	//category 2 fields
-	private BigDecimal palkkaYhteensa;
 	private BigDecimal tyoPaivatYhteensa;
 	private BigDecimal tyoPaivatPerViikkoKeskiarvo;
 	private BigDecimal lomaPalkkaKerroin;
 
 	//category 4 fields
-	private BigDecimal lomaKorvausYhteensa;
 	private BigDecimal saamattaJaanytPalkka;
 	private BigDecimal korvausProsentti;
-	private BigDecimal lomaKorvaus;
 
+	//common fields
+	private BigDecimal palkkaYhteensa;
+	private BigDecimal lomaPalkka;
 	private BigDecimal lomaRaha;
-	
-	public enum VacationDayMethod {
+
+	public enum LomaPaivienAnsaintaSaanto {
 		PAIVAT,
 		TUNNIT;
 	}
-	
-	public enum Category {
-		KUUKAUSIPALKALLINEN,
-		PAIVAKOHTAINEN;
+
+	public enum LomaPalkkaKaava {
+		KUUKAUSIPALKKAISET,
+		TUNTIPALKKAISET_VUOSILOMALAKI,
+		TUNTIPALKKAISET_LOMAPALKKASOPIMUS,
+		PROSENTTIPERUSTEINEN;
 	}
 
 	public VacationPayCalculator (EmployeeRecord record, int year) {
 
 		this.record = record;
-		
+		ChangeList dayChanges = record.getWorkDayChanges();
+		// ChangeList hourChanges = record.getWorkHourChanges(); Work hour changes not implemented yet
+		// ChangeList salaryChanges = record.getSalaryChanges(); Salary changes not implemented yet
+
 		final LocalDate endDate = Rules.getLaskuKaudenLoppu(year);
 		final LocalDate startDate = endDate.minusYears(1).plusDays(1); 
 
-		/*
-		 * Vuosilomalaki 18.3.2005/162: §6
-		 * Jos työntekijä on sopimuksen mukaisesti työssä niin harvoina päivinä,
-		 * että hänelle ei tästä syystä kerry ainoatakaan 14 työssäolopäivää sisältävää
-		 * kalenterikuukautta tai vain osa kalenterikuukausista sisältää 14 työssäolopäivää,
-		 * täydeksi lomanmääräytymiskuukaudeksi katsotaan sellainen kalenterikuukausi, jonka
-		 * aikana työntekijälle on kertynyt vähintään 35 työtuntia tai 7 §:ssä tarkoitettua 
-		 * työssäolon veroista tuntia.
-		 */
+		kuukausi = initData(record, startDate, endDate);
 		
-		ChangeList dayChanges = record.getWorkDayChanges();
-		if (!dayChanges.getDataBetween(startDate, endDate).isEmpty()) {
-			sovitutPaivatMuuttuneet = true;
-			// TODO work day changes not implemeneted yet
-
-		} else {
-			sovitutPaivatMuuttuneet = false;
-			BigDecimal unchangedDays = dayChanges.getValueOn(endDate).multiply(new BigDecimal(4));
-			
-			if (unchangedDays.compareTo(Rules.getKuukausiPaivaVaatimus()) != -1) {
-				lomaPaivaLaskuTapa = VacationDayMethod.PAIVAT;
-			} else lomaPaivaLaskuTapa = VacationDayMethod.TUNNIT;
-			
-			for (int i=0; i < 12; i++) {
-				sovitutPaivat[i] = unchangedDays;
-			}
-			
-		}
-		
-		ChangeList hourChanges = record.getWorkHourChanges();
-		if (!hourChanges.getDataBetween(startDate, endDate).isEmpty()) {
-			// TODO work hour changes not implemented yet
-
-		} else {
-			BigDecimal unchangedHours = hourChanges.getValueOn(endDate).multiply(new BigDecimal(4));
-			for (int i=0; i < 12; i++) {
-				sovitutTunnit[i] = unchangedHours;
-			}
-		}
-
-		// data processing to monthly totals
-		if (record.isSalaried()) {
-			for (int i=0 ; i < 12; i++) {
-				kuukaudenTyoPaivat[i] = sovitutPaivat[i]; // workday tracking not implemented for salaraied employees
-			}
-			BigDecimal unchangedSalary = record.getSalaryChanges().getValueOn(endDate);
-			ChangeList salaryChanges = record.getSalaryChanges();
-			if (!salaryChanges.getDataBetween(startDate, endDate).isEmpty()) {
-				// TODO salary changes not implememnted yet
-
-			} else {
-				for (int i=0; i < 12; i++) {
-					kuukaudenPalkka[i] = unchangedSalary;
-				}
-			}
-		} else {
-			List<EmploymentData> filteredList = record.getEmploymentList().getDataBetween(startDate, endDate);
-			for(EmploymentData data : filteredList) {
-				int monthIndex = data.getDate().getMonthValue() - 1;
-
-				/*
-				 * Vuosilomalaki 18.3.2005/162: §7
-				 * Työssäolon veroisena pidetään työstä poissaoloaikaa, jolta työnantaja on lain mukaan velvollinen maksamaan työntekijälle palkan.
-				 *
-				 * PAM Kaupan alan TES, §20 10.
-				 * 10. Maksettuun palkkaan lisätään laskennallista palkkaa:
-				 * ...
-				 * raskaus- ja vanhempainvapaan vuosilomaa kerryttävältä ajalta
-				 * tilapäisen hoitovapaan ajalta (työsopimuslain 4:6 §)
-				 */
-				if (!data.getInfo().equals("")) { // days with info are not added as regular workdays or add to vacation total hour count. (weekday holiday bonus)
-					if (kuukaudenPoissaOloPaivat[monthIndex] == null) kuukaudenPoissaOloPaivat[monthIndex] = BigDecimal.ZERO;
-					if (data.getHours() == BigDecimal.ZERO) kuukaudenPoissaOloPaivat[monthIndex] = kuukaudenPoissaOloPaivat[monthIndex].add(BigDecimal.ONE); // days with info and no hours are treated as valid leave days, limited leave such as sick leave not implememnted yet.
-				} else  {	
-					if (kuukaudenTyoPaivat[monthIndex] == null) kuukaudenTyoPaivat[monthIndex] = BigDecimal.ZERO;
-					kuukaudenTyoPaivat[monthIndex] = kuukaudenTyoPaivat[monthIndex].add(BigDecimal.ONE);
-					if (kuukaudenTyoTunnit[monthIndex] == null) kuukaudenTyoTunnit[monthIndex] = BigDecimal.ZERO;
-					kuukaudenTyoTunnit[monthIndex] = kuukaudenTyoTunnit[monthIndex].add(data.getHours());
-					/**
-					 * PAM Kaupan alan TES: §20 6.
-					 * Lomapalkka provision osalta lasketaan vuosilomalain mukaan.
-					 */
-					if (kuukaudenPalkka[monthIndex] == null) kuukaudenPalkka[monthIndex] = BigDecimal.ZERO;
-					kuukaudenPalkka[monthIndex] = kuukaudenPalkka[monthIndex].add((data.getHours().multiply(data.getWage())).add(data.getBonus()));
-				}
-			}
-		}
 		palkkaYhteensa = BigDecimal.ZERO;
-		for (BigDecimal thisMonthsPay : kuukaudenPalkka) {
-			if (thisMonthsPay != null) palkkaYhteensa = palkkaYhteensa.add(thisMonthsPay);
-		}
+		poissaOlotYhteensa = BigDecimal.ZERO;
 		tyoPaivatYhteensa = BigDecimal.ZERO;
-		for (BigDecimal thisMonthsDays : kuukaudenTyoPaivat) {
-			if (thisMonthsDays != null) tyoPaivatYhteensa = tyoPaivatYhteensa.add(thisMonthsDays);
+		for (MonthlyData data : kuukausi) {
+			palkkaYhteensa = palkkaYhteensa.add(data.getPalkka());
+			poissaOlotYhteensa = poissaOlotYhteensa.add(data.getPoissaOlot());
+			tyoPaivatYhteensa = tyoPaivatYhteensa.add(data.getTyoPaivat());
 		}
-		paivaPalkkaKeskiarvo = palkkaYhteensa.divide(tyoPaivatYhteensa, 3, RoundingMode.HALF_UP);
-
-		// vacation day calculation
-
-		lomanMaaraytymisKuukaudet = 0;
-		lomaKorvausYhteensa = BigDecimal.ZERO;
-		for (int i = 0; i < 12; i++) {
-			if (kuukaudenTyoTunnit[i] == null) kuukaudenTyoTunnit[i] = BigDecimal.ZERO;
-			if (kuukaudenPalkka[i] == null) kuukaudenPalkka[i] = BigDecimal.ZERO;		
-			if (kuukaudenTyoPaivat[i] == null) kuukaudenTyoPaivat[i] = BigDecimal.ZERO;
-			if (kuukaudenPoissaOloPaivat[i] == null) kuukaudenPoissaOloPaivat[i] = BigDecimal.ZERO;
 		
-			/*
-			 * Vuosilomalaki 18.3.2005/162: §6
-			 * Jos työntekijä on sopimuksen mukaisesti työssä niin harvoina päivinä,
-			 * että hänelle ei tästä syystä kerry ainoatakaan 14 työssäolopäivää sisältävää
-			 * kalenterikuukautta tai vain osa kalenterikuukausista sisältää 14 työssäolopäivää,
-			 * täydeksi lomanmääräytymiskuukaudeksi katsotaan sellainen kalenterikuukausi, jonka
-			 * aikana työntekijälle on kertynyt vähintään 35 työtuntia tai 7 §:ssä tarkoitettua 
-			 * työssäolon veroista tuntia.
-			 */
-			if ((lomaPaivaLaskuTapa == VacationDayMethod.PAIVAT) &&
-					(sovitutPaivat[i].compareTo(Rules.getKuukausiPaivaVaatimus()) != -1) && 
-					(kuukaudenTyoPaivat[i].add(kuukaudenPoissaOloPaivat[i]).compareTo(Rules.getKuukausiPaivaVaatimus()) != -1))
-				lomanMaaraytymisKuukaudet++;
-			// Add leave days as proportionate hours as planned weekly hours / 5 per day
-			else if ((lomaPaivaLaskuTapa == VacationDayMethod.TUNNIT) &&
-					(kuukaudenPoissaOloPaivat[i].divide(new BigDecimal(5)).multiply(sovitutTunnit[i]).add(kuukaudenTyoTunnit[i]).compareTo(Rules.getKuukausiTuntiVaatimus()) != -1))
-				lomanMaaraytymisKuukaudet++;
-			else {
-				lomaKorvausYhteensa = lomaKorvausYhteensa.add(kuukaudenPalkka[i]);
-				palkkaYhteensa = palkkaYhteensa.subtract(kuukaudenPalkka[i]);
-			}
-		}
+		paivaPalkkaKeskiarvo = palkkaYhteensa.divide(tyoPaivatYhteensa, 3, RoundingMode.DOWN);
+
+		lomaPaivienAnsaintaSaanto = calculateLomaPaivienAnsaintaSaanto(dayChanges.getValueOn(endDate), dayChanges.hasChangedBetween(startDate, endDate));
+
+		lomanMaaraytymisKuukaudet = calculateMaaraytymisKuukaudet(lomaPaivienAnsaintaSaanto, kuukausi);
+
 		/* 
 		 * Vuosilomalaki 18.3.2005/162: §5
 		 * Työntekijällä on oikeus saada lomaa kaksi ja puoli arkipäivää kultakin täydeltä lomanmääräytymiskuukaudelta. 
@@ -216,82 +103,169 @@ public class VacationPayCalculator {
 
 		if (lomaPaivat != 0) lomaRahaOikeus = true;
 		else lomaRahaOikeus = false;
+
+		lomaPalkkaKaava = calculateLomaPalkkaKaava(lomaPaivat, record.isSalaried(), record.getWorkDayChanges().hasChangedBetween(startDate, endDate));
+
+		Rules.getKorvausProsentti(record.getStartDate(), endDate);
+
 		
-		// vacation day based pay calculation
+		// Lomapalkka calculation
+		
+		switch (lomaPalkkaKaava) {
+		case KUUKAUSIPALKKAISET: 
+			kuukausiPalkka = record.getSalaryChanges().getValueOn(endDate);
+			kuukausiTyoPaivat = record.getWorkDayChanges().getValueOn(endDate).multiply(new BigDecimal(4));
+			
+			paivaPalkka = kuukausiPalkka.divide(kuukausiTyoPaivat);
 
-		/**
-		 * PAM Kaupan alan TES, §20 6.
-		 * Jos työntekijän työaika ja vastaavasti palkka on muuttunut lomanmääräytymisvuoden aikana
-		 * ja hän on kuukausipalkkainen lomanmääräytymisvuoden lopussa (31.3.), hänen lomapalkkansa 
-		 * lasketaan tämän pykälän 8–11. kohdan mukaan.
-		 */
-		if (record.isSalaried() && !sovitutPaivatMuuttuneet) {
-			if (lomaPaivat != 0) {
-				lomaPalkkalaskuTapa = Category.KUUKAUSIPALKALLINEN;
-				
-				kuukausiPalkka = record.getSalaryChanges().getValueOn(endDate);
-				kuukausiTyoPaivat = record.getWorkDayChanges().getValueOn(endDate).multiply(new BigDecimal(4));
-				paivaPalkka = kuukausiPalkka.divide(kuukausiTyoPaivat);
-
-				lomaPalkka = paivaPalkka.multiply(new BigDecimal(lomaPaivat));
-			}
-			/*
+			lomaPalkka = paivaPalkka.multiply(new BigDecimal(lomaPaivat));
+			break;
+			
+		case TUNTIPALKKAISET_VUOSILOMALAKI:
+			/**
+			 * PAM Kaupan alan TES, §20 6.
+			 * Jos työntekijän työaika ja vastaavasti palkka on muuttunut lomanmääräytymisvuoden aikana
+			 * ja hän on kuukausipalkkainen lomanmääräytymisvuoden lopussa (31.3.), hänen lomapalkkansa 
+			 * lasketaan tämän pykälän 8–11. kohdan mukaan.
+			 *
 			 * Vuosilomalaki 18.3.2005/162: §11
 			 * Muun kuin viikko- tai kuukausipalkalla työskentelevän sellaisen työntekijän vuosilomapalkka,
 			 * joka sopimuksen mukaan työskentelee vähintään 14 päivänä kalenterikuukaudessa, lasketaan
 			 * kertomalla hänen keskipäiväpalkkansa lomapäivien määrän perusteella määräytyvällä kertoimella
 			 */
-		} else {
-			if (lomaPaivat != 0) lomaPalkkalaskuTapa = Category.PAIVAKOHTAINEN;
 			lomaPalkkaKerroin = Rules.getLomaPalkkaKerroin(lomaPaivat);
 			lomaPalkka = paivaPalkkaKeskiarvo.multiply(lomaPalkkaKerroin);
+			break;
 			
-			//TODO Not implemented yet
-			/**
-			if (record.isSalaried() == true) {
-				averageWeeklyWorkDays = new BigDecimal(totalDays).divide(new BigDecimal(12));
-				vacationPay = vacationPay.multiply(averageWeeklyWorkDays.divide(new BigDecimal(5)));
+		case TUNTIPALKKAISET_LOMAPALKKASOPIMUS:
+			// not implemmented yet
+			break;
+
+		case PROSENTTIPERUSTEINEN:
+			poissaOlotYhteensa = BigDecimal.ZERO;
+			for (MonthlyData data : kuukausi) {
+				poissaOlotYhteensa = poissaOlotYhteensa.add(data.getPoissaOlot());
 			}
-			 */
-		}
-		if (lomaRahaOikeus) lomaRaha = lomaPalkka.divide(new BigDecimal(2));
-		// percentile vacation pay calculation
-
-		poissaOloPaivatYhteensa = BigDecimal.ZERO;
-		for (BigDecimal leaveThisMonth : kuukaudenPoissaOloPaivat) {
-			poissaOloPaivatYhteensa = poissaOloPaivatYhteensa.add(leaveThisMonth);
-		}
-		lomaKorvaus = BigDecimal.ZERO;
-		if ((lomaKorvausYhteensa != BigDecimal.ZERO) || (poissaOloPaivatYhteensa != BigDecimal.ZERO)) {
-
-			if (lomaPalkkalaskuTapa == Category.KUUKAUSIPALKALLINEN) saamattaJaanytPalkka = poissaOloPaivatYhteensa.multiply(paivaPalkka); 
-			else saamattaJaanytPalkka = poissaOloPaivatYhteensa.multiply(paivaPalkkaKeskiarvo);
-
+			saamattaJaanytPalkka = poissaOlotYhteensa.multiply(paivaPalkkaKeskiarvo);
 			korvausProsentti = Rules.getKorvausProsentti(record.getStartDate(), endDate);
-			lomaKorvaus = lomaKorvausYhteensa.add(saamattaJaanytPalkka).multiply(korvausProsentti).movePointLeft(2);		
+			lomaPalkka = palkkaYhteensa.add(saamattaJaanytPalkka).multiply(korvausProsentti).movePointLeft(2);
 		}
+		
+		if (lomaRahaOikeus) lomaRaha = lomaPalkka.divide(new BigDecimal(2));
+		
+}
+
+	private MonthlyData[] initData(EmployeeRecord record, LocalDate startDate, LocalDate endDate) {
+		MonthlyData[] monthlyData = new MonthlyData[12];
+		for (int i = 0; i < 12; i++) {
+			monthlyData[i] = new MonthlyData();
+		}
+
+		if (record.isSalaried()) {
+			for (MonthlyData data : monthlyData) {
+				data.setTyoPaivat(record.getWorkDayChanges().getValueOn(endDate).multiply(new BigDecimal(4))); 
+				data.setPalkka(record.getSalaryChanges().getValueOn(endDate));
+			}
+
+		} else {
+			List<EmploymentData> filteredList = record.getEmploymentList().getDataBetween(startDate, endDate);
+			for(EmploymentData data : filteredList) {
+				int monthIndex = data.getDate().getMonthValue() - 1;
+				MonthlyData currentMonth = monthlyData[monthIndex];
+
+				/*
+				 * Vuosilomalaki 18.3.2005/162: §7
+				 * Työssäolon veroisena pidetään työstä poissaoloaikaa, jolta työnantaja on lain mukaan velvollinen maksamaan työntekijälle palkan.
+				 *
+				 * PAM Kaupan alan TES, §20 10.
+				 * 10. Maksettuun palkkaan lisätään laskennallista palkkaa:
+				 * ...
+				 * raskaus- ja vanhempainvapaan vuosilomaa kerryttävältä ajalta
+				 * tilapäisen hoitovapaan ajalta (työsopimuslain 4:6 §)
+				 */
+				if (!data.getInfo().equals("")) { // days with info are not added as regular workdays or add to vacation total hour count. (weekday holiday bonus)
+					if (data.getHours() == BigDecimal.ZERO) currentMonth.setPoissaOlot(currentMonth.getPoissaOlot().add(BigDecimal.ONE)); // days with info and no hours are treated as valid leave days, limited leave such as sick leave not implememnted yet.
+				} else  {
+					currentMonth.setTyoPaivat(currentMonth.getTyoPaivat().add(BigDecimal.ONE));
+					currentMonth.setTyoTunnit(currentMonth.getTyoTunnit().add(data.getHours()));
+					/**
+					 * PAM Kaupan alan TES: §20 6.
+					 * Lomapalkka provision osalta lasketaan vuosilomalain mukaan.
+					 */
+					currentMonth.setPalkka(currentMonth.getPalkka().add((data.getHours().multiply(data.getWage())).add(data.getBonus())));
+				}
+			}
+		}
+		return monthlyData;
+	}
+
+	/**
+	 * PAM Kaupan alan TES, §20 2.
+	 * ...
+	 * Lomaa ansaitaan joko 14 päivän tai 35 tunnin säännön perusteella.
+	 * 
+	 * Lomaa ansaitaan 35 tunnin säännön perusteella työntekijän työskennellessä työsopimuksen mukaan alle 14 päivää kuukaudessa.
+	 */
+	private LomaPaivienAnsaintaSaanto calculateLomaPaivienAnsaintaSaanto(BigDecimal sovitutTyoPaivat, boolean sovitutPaivatMuuttuneet) {
+		if (!sovitutPaivatMuuttuneet && (sovitutTyoPaivat.multiply(new BigDecimal(4)).compareTo(Rules.getKuukausiPaivaVaatimus()) != -1))
+			return LomaPaivienAnsaintaSaanto.PAIVAT;
+		else return LomaPaivienAnsaintaSaanto.TUNNIT;
+	}
+
+	/*
+	 * Vuosilomalaki 18.3.2005/162: §6
+	 * Jos työntekijä on sopimuksen mukaisesti työssä niin harvoina päivinä,
+	 * että hänelle ei tästä syystä kerry ainoatakaan 14 työssäolopäivää sisältävää
+	 * kalenterikuukautta tai vain osa kalenterikuukausista sisältää 14 työssäolopäivää,
+	 * täydeksi lomanmääräytymiskuukaudeksi katsotaan sellainen kalenterikuukausi, jonka
+	 * aikana työntekijälle on kertynyt vähintään 35 työtuntia tai 7 §:ssä tarkoitettua 
+	 * työssäolon veroista tuntia.
+	 */
+	private int calculateMaaraytymisKuukaudet(LomaPaivienAnsaintaSaanto ansaintaSaanto, MonthlyData[] monthlyData) {
+		int months = 0;
+		if (lomaPaivienAnsaintaSaanto == LomaPaivienAnsaintaSaanto.PAIVAT) {
+			for (int i = 0; i < 12; i++) {
+				if (monthlyData[i].getTyoPaivat().add(monthlyData[i].getPoissaOlot()).compareTo(Rules.getKuukausiPaivaVaatimus()) != -1) months++;
+			}
+		}
+		else if (lomaPaivienAnsaintaSaanto == LomaPaivienAnsaintaSaanto.TUNNIT) {
+			for (int i = 0; i < 12; i++) {
+				if (monthlyData[i].getPoissaOlot().multiply(calculateTyoTuntiKeskiarvo(monthlyData)).add(monthlyData[i].getTyoTunnit()).compareTo(Rules.getKuukausiTuntiVaatimus()) != -1)
+					months++;
+			}		
+		}
+		return months;
+	}
+
+	private BigDecimal calculateTyoTuntiKeskiarvo(MonthlyData[] monthlyData) {
+		BigDecimal hours = BigDecimal.ZERO;
+		BigDecimal days = BigDecimal.ZERO;
+		for (MonthlyData data : monthlyData) {
+			hours = hours.add(data.getTyoTunnit());
+			days = days.add(data.getTyoPaivat());
+		}
+		return hours.divide(days, 3, RoundingMode.DOWN);
+	}
+
+	private LomaPalkkaKaava calculateLomaPalkkaKaava(int lomaPaivat, boolean kuukausiPalkallinen, boolean tyoPaivatMuuttuneet) {
+		if (lomaPaivat == 0) return LomaPalkkaKaava.PROSENTTIPERUSTEINEN;
+		else if(kuukausiPalkallinen && !tyoPaivatMuuttuneet) return LomaPalkkaKaava.KUUKAUSIPALKKAISET;
+		// LomaPalkkaKaava.TUNTIPALKKAISET_LOMAPALKKASOPIMUS not implemented yet
+		else return LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI;
 	}
 
 	public void printMonthlyInformation() {
 		String[] months = new String[] {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
 		for (int i=0; i < months.length; i++) {
-			System.out.println(months[i] + ": Workdays - " + kuukaudenTyoPaivat[i] + ", Leave days - " + kuukaudenPoissaOloPaivat[i] + ", Work hours - " + kuukaudenTyoTunnit[i] + ", Monthly pay - " + kuukaudenPalkka[i]);
+			System.out.println(months[i] + ": Workdays - " + kuukausi[i].getTyoPaivat() + ", Leave days - " + kuukausi[i].getPoissaOlot() + ", Work hours - " + kuukausi[i].getTyoTunnit() + ", Monthly pay - " + kuukausi[i].getPalkka());
 		}
-		System.out.println("Category is " + lomaPalkkalaskuTapa);
+		System.out.println("Category is " + lomaPalkkaKaava);
 	}
 
-	public BigDecimal[] getSovitutPaivat() {
-		return sovitutPaivat;
+	public LomaPaivienAnsaintaSaanto getLomaPaivaLaskuTapa() {
+		return lomaPaivienAnsaintaSaanto;
 	}
 
-	public BigDecimal[] getSovitutTunnit() {
-		return sovitutTunnit;
-	}
-	
-	public VacationDayMethod getLomaPaivaLaskuTapa() {
-		return lomaPaivaLaskuTapa;
-	}
-	
 	public int getLomanMaaraytymisKuukaudet() {
 		return lomanMaaraytymisKuukaudet;
 	}
@@ -303,29 +277,13 @@ public class VacationPayCalculator {
 	public int getLomaPaivat() {
 		return lomaPaivat;
 	}
-	
-	public BigDecimal[] getKuukaudenTyoTunnit() {
-		return kuukaudenTyoTunnit;
-	}
-
-	public BigDecimal[] getKuukaudenTyoPaivat() {
-		return kuukaudenTyoPaivat;
-	}
-
-	public BigDecimal[] getKuukaudenPoissaOloPaivat() {
-		return kuukaudenPoissaOloPaivat;
-	}
-
-	public BigDecimal[] getKuukaudenPalkka() {
-		return kuukaudenPalkka;
-	}
 
 	public BigDecimal getPaivaPalkkaKeskiarvo() {
 		return paivaPalkkaKeskiarvo;
 	}
 
-	public Category getLomaPalkkaLaskuTapa() {
-		return lomaPalkkalaskuTapa;
+	public LomaPalkkaKaava getLomaPalkkaLaskuTapa() {
+		return lomaPalkkaKaava;
 	}
 
 	public BigDecimal getKuukausiPalkka() {
@@ -353,19 +311,15 @@ public class VacationPayCalculator {
 	}
 
 	public BigDecimal getPoissaOloPaivatYhteensa() {
-		return poissaOloPaivatYhteensa;
+		return poissaOlotYhteensa;
 	}
-	
+
 	public BigDecimal getTyoPaivatPerViikkoKeskiarvo() {
 		return tyoPaivatPerViikkoKeskiarvo;
 	}
 
 	public BigDecimal getLomaPalkkaKerroin() {
 		return lomaPalkkaKerroin;
-	}
-
-	public BigDecimal getLomaKorvausYhteensa() {
-		return lomaKorvausYhteensa;
 	}
 
 	public BigDecimal getSaamattaJaanytPalkka() {
@@ -376,34 +330,30 @@ public class VacationPayCalculator {
 		return korvausProsentti;
 	}
 
-	public BigDecimal getLomaKorvaus() {
-		return lomaKorvaus;
-	}
-
 	public boolean oikeusLomaRahaan() {
 		return lomaRahaOikeus;
 	}
-	
+
 	public BigDecimal getLomaRaha() {
 		return lomaRaha;
 	}
-	
+
 	@Override
 	public String toString() {
 		String resultString = "";
-		if (lomaPalkkalaskuTapa == Category.KUUKAUSIPALKALLINEN) {
+		if (lomaPalkkaKaava == LomaPalkkaKaava.KUUKAUSIPALKKAISET) {
 			resultString = "Kohtaan 1:\n";
 			resultString += "(" + kuukausiPalkka + " € : " + kuukausiTyoPaivat + " = " + String.format(Locale.ENGLISH, "%.2f", paivaPalkka) + " X " + lomaPaivat + " = " + String.format(Locale.ENGLISH, "%.2f", lomaPalkka) + " €\n";
-		} else  if (lomaPalkkalaskuTapa == Category.PAIVAKOHTAINEN) {
+		} else  if (lomaPalkkaKaava == LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI) {
 			resultString = "Kohtaan 2:\n";
 			resultString += palkkaYhteensa + " € : " + tyoPaivatYhteensa + " = " + String.format(Locale.ENGLISH, "%.2f", paivaPalkkaKeskiarvo) + " €/pv { X ";
 			if (record.isSalaried()) resultString += tyoPaivatPerViikkoKeskiarvo;
 			else resultString += "-";
 			resultString += " : 5 } X " + lomaPalkkaKerroin + " = " + String.format(Locale.ENGLISH, "%.2f", lomaPalkka) + " €\n";
 		}
-		if (lomaKorvaus != BigDecimal.ZERO) {
+		else if (lomaPalkkaKaava == LomaPalkkaKaava.PROSENTTIPERUSTEINEN) {
 			resultString += "Kohtaan 4:\n";
-			resultString += lomaKorvausYhteensa + " € + " + String.format(Locale.ENGLISH, "%.2f", saamattaJaanytPalkka) + " € X " + String.format(Locale.ENGLISH, "%.1f", korvausProsentti) + " % = " + String.format(Locale.ENGLISH, "%.2f", lomaKorvaus) + " €";
+			resultString += palkkaYhteensa + " € + " + String.format(Locale.ENGLISH, "%.2f", saamattaJaanytPalkka) + " € X " + String.format(Locale.ENGLISH, "%.1f", korvausProsentti) + " % = " + String.format(Locale.ENGLISH, "%.2f", lomaPalkka) + " €";
 		}
 		return resultString;
 	}
