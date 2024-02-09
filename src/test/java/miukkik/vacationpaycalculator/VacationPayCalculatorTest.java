@@ -78,10 +78,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * Lomapäiväkerroin - 2.5
 		 * Lomapäivät - 30
 		 */				
-		BigDecimal assertLomaPaivaKerroin = new BigDecimal("2.5");
-		BigDecimal testLomaPaivaKerroin = calculator.getLomaPaivatPerMaaraytymisKuukausi();
-		assertEquals("Lomapäivät per määräytymiskuukausi", assertLomaPaivaKerroin, testLomaPaivaKerroin);
-		
+		assertEquals("Lomapäivät per määräytymiskuukausi", new BigDecimal("2.5"), calculator.getLomaPaivatPerMaaraytymisKuukausi());	
 		assertEquals("Lomapäivät", 30, calculator.getLomaPaivat());
 		
 		/*
@@ -103,14 +100,8 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * 
 		 * Expected: 195
 		 */
-		BigDecimal assertTyoPaivat = new BigDecimal(195);
-		BigDecimal testTyoPaivat = calculator.getTyoPaivatYhteensa();
-		assertEquals("Työpäivät", assertTyoPaivat, testTyoPaivat);
-				
-		BigDecimal assertPoissaOloPaivat = new BigDecimal(36);
-		BigDecimal testPoissaOloPaivat = calculator.getPoissaOloPaivatYhteensa();
-		assertEquals("Poissaolopäivät", assertPoissaOloPaivat, testPoissaOloPaivat);
-
+		assertEquals("Työpäivät", new BigDecimal(195), calculator.getTyoPaivatYhteensa());
+		assertEquals("Poissaolopäivät", new BigDecimal(36), calculator.getPoissaOloPaivatYhteensa());
 		
 		/* PAM Kaupan alan TES: §21
 		 * Lomaraha on 50 % vuosilomalain mukaan ansaittua lomaa vastaavasta lomapalkasta.
@@ -198,10 +189,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * Lomapäiväkerroin - 2.5
 		 * Lomapäivät - 30
 		 */
-		BigDecimal assertLomaPaivaKerroin = new BigDecimal("2.5");
-		BigDecimal testLomaPaivaKerroin = calculator.getLomaPaivatPerMaaraytymisKuukausi();
-		assertEquals("Lomapäivät per määräytymiskuukausi", assertLomaPaivaKerroin, testLomaPaivaKerroin);
-		
+		assertEquals("Lomapäivät per määräytymiskuukausi", new BigDecimal("2.5"), calculator.getLomaPaivatPerMaaraytymisKuukausi());
 		assertEquals("Lomapäivät", 30, calculator.getLomaPaivat());
 		
 		/*
@@ -210,9 +198,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * 
 		 * Expected: 195
 		 */		
-		BigDecimal assertTyoPaivat = new BigDecimal(195);
-		BigDecimal testTyoPaivat = calculator.getTyoPaivatYhteensa();
-		assertEquals("Työpäivät", assertTyoPaivat, testTyoPaivat);
+		assertEquals("Työpäivät", new BigDecimal(195), calculator.getTyoPaivatYhteensa());
 		
 
 		/*
@@ -220,9 +206,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * 
 		 * Expected: 14358 / 195 (~73.630)
 		 */
-		BigDecimal assertPalkkaKeskiarvo = new BigDecimal("73.630");
-		BigDecimal testPalkkaKeskiarvo = calculator.getPaivaPalkkaKeskiarvo();
-		assertEquals("Päiväpalkkakeskiarvo", assertPalkkaKeskiarvo, testPalkkaKeskiarvo);
+		assertEquals("Päiväpalkkakeskiarvo", new BigDecimal("73.630"), calculator.getPaivaPalkkaKeskiarvo());
 
 		/*
 		 * Vuosilomalaki 18.3.2005/162: 
@@ -245,9 +229,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * 
 		 * Expected: 27.8
 		 */
-		BigDecimal assertLomaPalkkaKerroin = new BigDecimal("27.8");
-		BigDecimal testLomaPalkkaKerroin = calculator.getLomaPalkkaKerroin();
-		assertEquals("Lomapalkkakerroin", assertLomaPalkkaKerroin, testLomaPalkkaKerroin);
+		assertEquals("Lomapalkkakerroin", new BigDecimal("27.8"), calculator.getLomaPalkkaKerroin());
 		
 		/* PAM Kaupan alan TES: §21
 		 * Lomaraha on 50 % vuosilomalain mukaan ansaittua lomaa vastaavasta lomapalkasta.
@@ -263,21 +245,12 @@ public class VacationPayCalculatorTest extends TestCase {
 		 *  Lomarahaoikeus - true
 		 *  Lomaraha - 2046.9418 / 2 (1023.4709)
 		 */
-		
-		
 		assertEquals("Lomarahaoikeus", true, calculator.oikeusLomaRahaan());
-	
-		BigDecimal assertLomaRaha = new BigDecimal("1023.457");
-		BigDecimal testLomaRaha = calculator.getLomaRaha().round(new MathContext(7, RoundingMode.DOWN));
-		assertEquals("Lomaraha", assertLomaRaha, testLomaRaha);
+		assertEquals("Lomaraha", new BigDecimal("1023.457"), calculator.getLomaRaha().round(new MathContext(7, RoundingMode.DOWN)));
 		
-		BigDecimal assertPalkka = new BigDecimal(14358);
-		BigDecimal testPalkka = calculator.getPalkkaYhteensa();
-		assertEquals("Palkka", assertPalkka, testPalkka);
+		assertEquals("Palkka", new BigDecimal(14358), calculator.getPalkkaYhteensa());
 		
-		BigDecimal assertLomaPalkka = new BigDecimal("2046.914");
-		BigDecimal testLomaPalkka = calculator.getLomaPalkka().round(new MathContext(7, RoundingMode.DOWN));
-		assertEquals("Lomapalkka", assertLomaPalkka, testLomaPalkka);	
+		assertEquals("Lomapalkka", new BigDecimal("2046.914"), calculator.getLomaPalkka().round(new MathContext(7, RoundingMode.DOWN)));	
 	}
 	
 	public void testBasicVacationPay() {
@@ -294,19 +267,14 @@ public class VacationPayCalculatorTest extends TestCase {
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2000);
 		
 		assertEquals("Lomapäivät", 2, calculator.getLomaPaivat());
-		assertEquals("Lomapalkkakaava", VacationPayCalculator.LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI, calculator.getLomaPalkkaLaskuTapa());
-		
-		BigDecimal assertPalkka = new BigDecimal(500);
-		BigDecimal testPalkka = calculator.getPalkkaYhteensa();
-		assertEquals("Palkka", assertPalkka, testPalkka);
-		
-		BigDecimal assertPalkkaKeskiarvo = new BigDecimal(100);
-		BigDecimal testPalkkaKeskiarvo = calculator.getPaivaPalkkaKeskiarvo();
-		assertEquals("Päiväpalkan keskiarvo", assertPalkkaKeskiarvo, testPalkkaKeskiarvo);
 
-		BigDecimal assertLomaPalkka = new BigDecimal(180);
-		BigDecimal testLomaPalkka = calculator.getLomaPalkka();
-		assertEquals("Lomapalkka", assertLomaPalkka, testLomaPalkka);
+		assertEquals("Lomapalkkakaava", VacationPayCalculator.LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI, calculator.getLomaPalkkaLaskuTapa());
+
+		assertEquals("Palkka", new BigDecimal(500), calculator.getPalkkaYhteensa());
+
+		assertEquals("Päiväpalkan keskiarvo", new BigDecimal(100), calculator.getPaivaPalkkaKeskiarvo());
+
+		assertEquals("Lomapalkka", new BigDecimal(180), calculator.getLomaPalkka());
 	}
 
 	public void testNotEnoughHours() {
@@ -321,14 +289,14 @@ public class VacationPayCalculatorTest extends TestCase {
 		list.add(new EmploymentData(LocalDate.of(2000, 1, 5), "", new BigDecimal(8), BigDecimal.ZERO));
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2000);
+
+		assertEquals("Lomapalkan laskukaava", VacationPayCalculator.LomaPalkkaKaava.PROSENTTIPERUSTEINEN, calculator.getLomaPalkkaLaskuTapa());
 		
-		BigDecimal assertLomaPalkka = new BigDecimal(32);
-		BigDecimal testLomaPalkka = calculator.getLomaPalkka();
-		assertEquals("LomaPalkka", assertLomaPalkka, testLomaPalkka);
+		assertEquals("LomaPalkka", new BigDecimal(32), calculator.getLomaPalkka());
 		
 	}
 	
-	public void testNotEnoughWorkDays() {
+	public void testNotEnoughPlannedWorkDays() {
 		EmployeeRecord record = new EmployeeRecord(LocalDate.of(2000, 1, 1), new BigDecimal(10));
 		record.getWorkDayChanges().add(new ChangeData(record.getStartDate(), new BigDecimal(3)));
 		
@@ -355,9 +323,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		
 		assertEquals("Lomapalkkakaava", VacationPayCalculator.LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI, calculator.getLomaPalkkaLaskuTapa());
 		
-		BigDecimal assertLomaPalkka = new BigDecimal(144);
-		BigDecimal testLomaPalkka = calculator.getLomaPalkka();
-		assertEquals("LomaPalkka", assertLomaPalkka, testLomaPalkka);
+		assertEquals("LomaPalkka", new BigDecimal(144), calculator.getLomaPalkka());
 		
 	}
 	
@@ -381,10 +347,8 @@ public class VacationPayCalculatorTest extends TestCase {
 		list.add(new EmploymentData(LocalDate.of(2000, 1, 13), "", new BigDecimal(8), BigDecimal.ZERO));
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2000);
-		
-		BigDecimal assertLomaPalkka = new BigDecimal(96);
-		BigDecimal testLomaPalkka = calculator.getLomaPalkka();
-		assertEquals("LomaPalkka", assertLomaPalkka, testLomaPalkka);
+
+		assertEquals("LomaPalkka", new BigDecimal(96), calculator.getLomaPalkka());
 		
 	}
 	
@@ -415,9 +379,7 @@ public class VacationPayCalculatorTest extends TestCase {
 
 		assertEquals("Lomapalkkakaava", VacationPayCalculator.LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI, calculator.getLomaPalkkaLaskuTapa());
 		
-		BigDecimal assertLomaPalkka = new BigDecimal(144);
-		BigDecimal testLomaPalkka = calculator.getLomaPalkka();
-		assertEquals("LomaPalkka", assertLomaPalkka, testLomaPalkka);
+		assertEquals("LomaPalkka", new BigDecimal(144), calculator.getLomaPalkka());
 		
 	}
 	
@@ -436,10 +398,8 @@ public class VacationPayCalculatorTest extends TestCase {
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2001);
 
 		assertEquals("Lomapäivät", 3, calculator.getLomaPaivat());
-		
-		BigDecimal assertLomaPalkka = new BigDecimal(270);
-		BigDecimal testLomaPalkka = calculator.getLomaPalkka();
-		assertEquals("LomaPalkka", assertLomaPalkka, testLomaPalkka);
+
+		assertEquals("LomaPalkka", new BigDecimal(270), calculator.getLomaPalkka());
 	}
 
 	public void testBasicSalariedVacationPay() {
@@ -454,10 +414,8 @@ public class VacationPayCalculatorTest extends TestCase {
 		assertEquals("Lomapäivät", 30, calculator.getLomaPaivat());
 		
 		assertEquals("Lomapalkkakaava", VacationPayCalculator.LomaPalkkaKaava.KUUKAUSIPALKKAISET, calculator.getLomaPalkkaLaskuTapa());
-		
-		BigDecimal assertTyoPaivat = new BigDecimal(20);
-		BigDecimal testTyoPaivat = calculator.getKuukausiTyoPaivat();
-		assertEquals("Sopimuksen työpäivät kuukaudessa", assertTyoPaivat, testTyoPaivat);
+
+		assertEquals("Sopimuksen työpäivät kuukaudessa", new BigDecimal(20), calculator.getKuukausiTyoPaivat());
 		
 		BigDecimal assertLomaPalkka = new BigDecimal(1500);
 		BigDecimal testLomaPalkka = calculator.getLomaPalkka();
@@ -474,9 +432,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		
 		assertEquals("Lomapalkkakaava", VacationPayCalculator.LomaPalkkaKaava.PROSENTTIPERUSTEINEN, calculator.getLomaPalkkaLaskuTapa());
 		assertEquals("Lomapäivät", 0, calculator.getLomaPaivat());
-		
-		BigDecimal assertLomaPalkka = new BigDecimal(900);
-		BigDecimal testLomaPalkka = calculator.getLomaPalkka();
-		assertEquals("Lomapalkka", assertLomaPalkka, testLomaPalkka);
+
+		assertEquals("Lomapalkka", new BigDecimal(900), calculator.getLomaPalkka());
 	}
 }
