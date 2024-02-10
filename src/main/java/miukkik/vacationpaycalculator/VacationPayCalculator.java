@@ -52,18 +52,6 @@ public class VacationPayCalculator {
 	private BigDecimal lomaPalkka;
 	private BigDecimal lomaRaha;
 
-	public enum LomaPaivienAnsaintaSaanto {
-		PAIVAT,
-		TUNNIT;
-	}
-
-	public enum LomaPalkkaKaava {
-		KUUKAUSIPALKKAISET,
-		TUNTIPALKKAISET_VUOSILOMALAKI,
-		TUNTIPALKKAISET_LOMAPALKKASOPIMUS,
-		PROSENTTIPERUSTEINEN;
-	}
-
 	public VacationPayCalculator (EmployeeRecord record, int year) {
 
 		this.record = record;
@@ -76,9 +64,7 @@ public class VacationPayCalculator {
 
 		paivaPalkkaKeskiarvo = palkkaYhteensa.divide(tyoPaivatYhteensa, 3, RoundingMode.DOWN);
 
-		lomaPaivienAnsaintaSaanto = calculateLomaPaivienAnsaintaSaanto(record.getWorkDayChanges().getValueOn(endDate), record.getWorkDayChanges().hasChangedBetween(startDate, endDate));
-
-		lomanMaaraytymisKuukaudet = calculateMaaraytymisKuukaudet(lomaPaivienAnsaintaSaanto, kuukausi);
+		lomaPaivienAnsaintaSaanto = record.getLomaPaivienAnsaintaSaanto(startDate, endDate);
 
 		/* 
 		 * Vuosilomalaki 18.3.2005/162: §5
@@ -88,7 +74,7 @@ public class VacationPayCalculator {
 		 * Loman pituutta laskettaessa päivän osa pyöristetään täyteen lomapäivään.
 		 */	
 		lomaPaivatPerMaaraytymisKuukausi = Rules.getLomanAnsainta(record.getStartDate(), endDate);
-
+		lomanMaaraytymisKuukaudet = calculateMaaraytymisKuukaudet(lomaPaivienAnsaintaSaanto, kuukausi);
 		lomaPaivat = calculateLomaPaivat(lomanMaaraytymisKuukaudet, lomaPaivatPerMaaraytymisKuukausi);
 
 		if (lomaPaivat != 0) lomaRahaOikeus = true; else lomaRahaOikeus = false;
@@ -199,19 +185,6 @@ public class VacationPayCalculator {
 			tyoTunnitYhteensa = tyoTunnitYhteensa.add(data.getTyoTunnit());
 		}
 	}
-
-		/**
-		 * PAM Kaupan alan TES, §20 2.
-		 * ...
-		 * Lomaa ansaitaan joko 14 päivän tai 35 tunnin säännön perusteella.
-		 * 
-		 * Lomaa ansaitaan 35 tunnin säännön perusteella työntekijän työskennellessä työsopimuksen mukaan alle 14 päivää kuukaudessa.
-		 */
-		private LomaPaivienAnsaintaSaanto calculateLomaPaivienAnsaintaSaanto(BigDecimal sovitutTyoPaivat, boolean sovitutPaivatMuuttuneet) {
-			if (!sovitutPaivatMuuttuneet && (sovitutTyoPaivat.multiply(new BigDecimal(4)).compareTo(Rules.getKuukausiPaivaVaatimus()) != -1))
-				return LomaPaivienAnsaintaSaanto.PAIVAT;
-			else return LomaPaivienAnsaintaSaanto.TUNNIT;
-		}
 
 		/*
 		 * Vuosilomalaki 18.3.2005/162: §6

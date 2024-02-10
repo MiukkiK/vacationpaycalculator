@@ -32,6 +32,20 @@ public class EmployeeRecord {
 		
 	}
 	
+	/**
+	 * PAM Kaupan alan TES, §20 2.
+	 * ...
+	 * Lomaa ansaitaan joko 14 päivän tai 35 tunnin säännön perusteella.
+	 * 
+	 * Lomaa ansaitaan 35 tunnin säännön perusteella työntekijän työskennellessä työsopimuksen mukaan alle 14 päivää kuukaudessa.
+	 */
+	public LomaPaivienAnsaintaSaanto getLomaPaivienAnsaintaSaanto(LocalDate startDate, LocalDate endDate) {
+		if (!getWorkDayChanges().hasChangedBetween(startDate, endDate) && (getWorkDayChanges().getValueOn(endDate).multiply(new BigDecimal(4)).compareTo(Rules.getKuukausiPaivaVaatimus()) != -1))
+			return LomaPaivienAnsaintaSaanto.PAIVAT;
+		else return LomaPaivienAnsaintaSaanto.TUNNIT;
+	}
+
+	
 	public boolean isSalaried() {
 		return salariedStatus;
 	}
