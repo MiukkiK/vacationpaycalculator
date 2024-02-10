@@ -79,7 +79,7 @@ public class VacationPayCalculator {
 
 		if (lomaPaivat != 0) lomaRahaOikeus = true; else lomaRahaOikeus = false;
 
-		lomaPalkkaKaava = calculateLomaPalkkaKaava(lomaPaivat, record.isSalaried(), record.getWorkDayChanges().hasChangedBetween(startDate, endDate));
+		lomaPalkkaKaava = record.getLomaPalkkaKaava(lomaPaivat, startDate, endDate);
 
 		// Lomapalkka calculation
 
@@ -186,154 +186,147 @@ public class VacationPayCalculator {
 		}
 	}
 
-		/*
-		 * Vuosilomalaki 18.3.2005/162: §6
-		 * Jos työntekijä on sopimuksen mukaisesti työssä niin harvoina päivinä,
-		 * että hänelle ei tästä syystä kerry ainoatakaan 14 työssäolopäivää sisältävää
-		 * kalenterikuukautta tai vain osa kalenterikuukausista sisältää 14 työssäolopäivää,
-		 * täydeksi lomanmääräytymiskuukaudeksi katsotaan sellainen kalenterikuukausi, jonka
-		 * aikana työntekijälle on kertynyt vähintään 35 työtuntia tai 7 §:ssä tarkoitettua 
-		 * työssäolon veroista tuntia.
-		 */
-		private int calculateMaaraytymisKuukaudet(LomaPaivienAnsaintaSaanto ansaintaSaanto, MonthlyData[] monthlyData) {
-			int months = 0;
-			if (lomaPaivienAnsaintaSaanto == LomaPaivienAnsaintaSaanto.PAIVAT) {
-				for (int i = 0; i < 12; i++) {
-					if (monthlyData[i].getTyoPaivat().add(monthlyData[i].getPoissaOlot()).compareTo(Rules.getKuukausiPaivaVaatimus()) != -1) months++;
-				}
+	/*
+	 * Vuosilomalaki 18.3.2005/162: §6
+	 * Jos työntekijä on sopimuksen mukaisesti työssä niin harvoina päivinä,
+	 * että hänelle ei tästä syystä kerry ainoatakaan 14 työssäolopäivää sisältävää
+	 * kalenterikuukautta tai vain osa kalenterikuukausista sisältää 14 työssäolopäivää,
+	 * täydeksi lomanmääräytymiskuukaudeksi katsotaan sellainen kalenterikuukausi, jonka
+	 * aikana työntekijälle on kertynyt vähintään 35 työtuntia tai 7 §:ssä tarkoitettua 
+	 * työssäolon veroista tuntia.
+	 */
+	private int calculateMaaraytymisKuukaudet(LomaPaivienAnsaintaSaanto ansaintaSaanto, MonthlyData[] monthlyData) {
+		int months = 0;
+		if (lomaPaivienAnsaintaSaanto == LomaPaivienAnsaintaSaanto.PAIVAT) {
+			for (int i = 0; i < 12; i++) {
+				if (monthlyData[i].getTyoPaivat().add(monthlyData[i].getPoissaOlot()).compareTo(Rules.getKuukausiPaivaVaatimus()) != -1) months++;
 			}
-			else if (lomaPaivienAnsaintaSaanto == LomaPaivienAnsaintaSaanto.TUNNIT) {
-				for (int i = 0; i < 12; i++) {
-					if (monthlyData[i].getPoissaOlot().multiply(calculateTyoTuntiKeskiarvo(monthlyData)).add(monthlyData[i].getTyoTunnit()).compareTo(Rules.getKuukausiTuntiVaatimus()) != -1)
-						months++;
-				}		
-			}
-			return months;
 		}
-
-		private int calculateLomaPaivat(int kuukaudet, BigDecimal kerroin) {
-			BigDecimal unrounded = new BigDecimal(kuukaudet).multiply(kerroin);
-			return unrounded.round(new MathContext(unrounded.precision() - unrounded.scale(), RoundingMode.UP)).intValue();
+		else if (lomaPaivienAnsaintaSaanto == LomaPaivienAnsaintaSaanto.TUNNIT) {
+			for (int i = 0; i < 12; i++) {
+				if (monthlyData[i].getPoissaOlot().multiply(calculateTyoTuntiKeskiarvo(monthlyData)).add(monthlyData[i].getTyoTunnit()).compareTo(Rules.getKuukausiTuntiVaatimus()) != -1)
+					months++;
+			}		
 		}
-
-		private BigDecimal calculateTyoTuntiKeskiarvo(MonthlyData[] monthlyData) {
-			BigDecimal hours = BigDecimal.ZERO;
-			BigDecimal days = BigDecimal.ZERO;
-			for (MonthlyData data : monthlyData) {
-				hours = hours.add(data.getTyoTunnit());
-				days = days.add(data.getTyoPaivat());
-			}
-			return hours.divide(days, 3, RoundingMode.DOWN);
-		}
-
-		private LomaPalkkaKaava calculateLomaPalkkaKaava(int lomaPaivat, boolean kuukausiPalkallinen, boolean tyoPaivatMuuttuneet) {
-			if (lomaPaivat == 0) return LomaPalkkaKaava.PROSENTTIPERUSTEINEN;
-			else if(kuukausiPalkallinen && !tyoPaivatMuuttuneet) return LomaPalkkaKaava.KUUKAUSIPALKKAISET;
-			// LomaPalkkaKaava.TUNTIPALKKAISET_LOMAPALKKASOPIMUS not implemented yet
-			else return LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI;
-		}
-
-		public void printMonthlyInformation() {
-			String[] months = new String[] {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
-			for (int i=0; i < months.length; i++) {
-				System.out.println(months[i] + ": Workdays - " + kuukausi[i].getTyoPaivat() + ", Leave days - " + kuukausi[i].getPoissaOlot() + ", Work hours - " + kuukausi[i].getTyoTunnit() + ", Monthly pay - " + kuukausi[i].getPalkka());
-			}
-			System.out.println("Category is " + lomaPalkkaKaava);
-		}
-
-		public LomaPaivienAnsaintaSaanto getLomaPaiivienAnsaintaSaanto() {
-			return lomaPaivienAnsaintaSaanto;
-		}
-
-		public BigDecimal getPaivaPalkkaKeskiarvo() {
-			return paivaPalkkaKeskiarvo;
-		}
-
-		public int getLomanMaaraytymisKuukaudet() {
-			return lomanMaaraytymisKuukaudet;
-		}
-
-		public BigDecimal getLomaPaivatPerMaaraytymisKuukausi() {
-			return lomaPaivatPerMaaraytymisKuukausi;
-		}
-
-		public int getLomaPaivat() {
-			return lomaPaivat;
-		}
-
-		public LomaPalkkaKaava getLomaPalkkaKaava() {
-			return lomaPalkkaKaava;
-		}
-
-		public BigDecimal getKuukausiPalkka() {
-			return kuukausiPalkka;
-		}
-
-		public BigDecimal getKuukausiTyoPaivat() {
-			return kuukausiTyoPaivat;
-		}
-
-		public BigDecimal getPaivaPalkka() {
-			return paivaPalkka;
-		}
-
-		public BigDecimal getLomaPalkka() {
-			return lomaPalkka;
-		}
-
-		public BigDecimal getPalkkaYhteensa() {
-			return palkkaYhteensa;
-		}
-
-		public BigDecimal getTyoPaivatYhteensa() {
-			return tyoPaivatYhteensa;
-		}
-
-		public BigDecimal getPoissaOlotYhteensa() {
-			return poissaOlotYhteensa;
-		}
-
-		public BigDecimal getTyoPaivatPerViikkoKeskiarvo() {
-			return tyoPaivatPerViikkoKeskiarvo;
-		}
-
-		public BigDecimal getLomaPalkkaKerroin() {
-			return lomaPalkkaKerroin;
-		}
-
-		public BigDecimal getSaamattaJaanytPalkka() {
-			return saamattaJaanytPalkka;
-		}
-
-		public BigDecimal getKorvausProsentti() {
-			return korvausProsentti;
-		}
-
-		public boolean oikeusLomaRahaan() {
-			return lomaRahaOikeus;
-		}
-
-		public BigDecimal getLomaRaha() {
-			return lomaRaha;
-		}
-
-		@Override
-		public String toString() {
-			String resultString = "";
-			if (lomaPalkkaKaava == LomaPalkkaKaava.KUUKAUSIPALKKAISET) {
-				resultString = "Kohtaan 1:\n";
-				resultString += "(" + kuukausiPalkka + " € : " + kuukausiTyoPaivat + " = " + String.format(Locale.ENGLISH, "%.2f", paivaPalkka) + " X " + lomaPaivat + " = " + String.format(Locale.ENGLISH, "%.2f", lomaPalkka) + " €\n";
-			} else  if (lomaPalkkaKaava == LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI) {
-				resultString = "Kohtaan 2:\n";
-				resultString += palkkaYhteensa + " € : " + tyoPaivatYhteensa + " = " + String.format(Locale.ENGLISH, "%.2f", paivaPalkkaKeskiarvo) + " €/pv { X ";
-				if (record.isSalaried()) resultString += tyoPaivatPerViikkoKeskiarvo;
-				else resultString += "-";
-				resultString += " : 5 } X " + lomaPalkkaKerroin + " = " + String.format(Locale.ENGLISH, "%.2f", lomaPalkka) + " €\n";
-			}
-			else if (lomaPalkkaKaava == LomaPalkkaKaava.PROSENTTIPERUSTEINEN) {
-				resultString += "Kohtaan 4:\n";
-				resultString += palkkaYhteensa + " € + " + String.format(Locale.ENGLISH, "%.2f", saamattaJaanytPalkka) + " € X " + String.format(Locale.ENGLISH, "%.1f", korvausProsentti) + " % = " + String.format(Locale.ENGLISH, "%.2f", lomaPalkka) + " €";
-			}
-			return resultString;
-		}
+		return months;
 	}
+
+	private int calculateLomaPaivat(int kuukaudet, BigDecimal kerroin) {
+		BigDecimal unrounded = new BigDecimal(kuukaudet).multiply(kerroin);
+		return unrounded.round(new MathContext(unrounded.precision() - unrounded.scale(), RoundingMode.UP)).intValue();
+	}
+
+	private BigDecimal calculateTyoTuntiKeskiarvo(MonthlyData[] monthlyData) {
+		BigDecimal hours = BigDecimal.ZERO;
+		BigDecimal days = BigDecimal.ZERO;
+		for (MonthlyData data : monthlyData) {
+			hours = hours.add(data.getTyoTunnit());
+			days = days.add(data.getTyoPaivat());
+		}
+		return hours.divide(days, 3, RoundingMode.DOWN);
+	}
+
+	public void printMonthlyInformation() {
+		String[] months = new String[] {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
+		for (int i=0; i < months.length; i++) {
+			System.out.println(months[i] + ": Workdays - " + kuukausi[i].getTyoPaivat() + ", Leave days - " + kuukausi[i].getPoissaOlot() + ", Work hours - " + kuukausi[i].getTyoTunnit() + ", Monthly pay - " + kuukausi[i].getPalkka());
+		}
+		System.out.println("Category is " + lomaPalkkaKaava);
+	}
+
+	public LomaPaivienAnsaintaSaanto getLomaPaiivienAnsaintaSaanto() {
+		return lomaPaivienAnsaintaSaanto;
+	}
+
+	public BigDecimal getPaivaPalkkaKeskiarvo() {
+		return paivaPalkkaKeskiarvo;
+	}
+
+	public int getLomanMaaraytymisKuukaudet() {
+		return lomanMaaraytymisKuukaudet;
+	}
+
+	public BigDecimal getLomaPaivatPerMaaraytymisKuukausi() {
+		return lomaPaivatPerMaaraytymisKuukausi;
+	}
+
+	public int getLomaPaivat() {
+		return lomaPaivat;
+	}
+
+	public LomaPalkkaKaava getLomaPalkkaKaava() {
+		return lomaPalkkaKaava;
+	}
+
+	public BigDecimal getKuukausiPalkka() {
+		return kuukausiPalkka;
+	}
+
+	public BigDecimal getKuukausiTyoPaivat() {
+		return kuukausiTyoPaivat;
+	}
+
+	public BigDecimal getPaivaPalkka() {
+		return paivaPalkka;
+	}
+
+	public BigDecimal getLomaPalkka() {
+		return lomaPalkka;
+	}
+
+	public BigDecimal getPalkkaYhteensa() {
+		return palkkaYhteensa;
+	}
+
+	public BigDecimal getTyoPaivatYhteensa() {
+		return tyoPaivatYhteensa;
+	}
+
+	public BigDecimal getPoissaOlotYhteensa() {
+		return poissaOlotYhteensa;
+	}
+
+	public BigDecimal getTyoPaivatPerViikkoKeskiarvo() {
+		return tyoPaivatPerViikkoKeskiarvo;
+	}
+
+	public BigDecimal getLomaPalkkaKerroin() {
+		return lomaPalkkaKerroin;
+	}
+
+	public BigDecimal getSaamattaJaanytPalkka() {
+		return saamattaJaanytPalkka;
+	}
+
+	public BigDecimal getKorvausProsentti() {
+		return korvausProsentti;
+	}
+
+	public boolean oikeusLomaRahaan() {
+		return lomaRahaOikeus;
+	}
+
+	public BigDecimal getLomaRaha() {
+		return lomaRaha;
+	}
+
+	@Override
+	public String toString() {
+		String resultString = "";
+		if (lomaPalkkaKaava == LomaPalkkaKaava.KUUKAUSIPALKKAISET) {
+			resultString = "Kohtaan 1:\n";
+			resultString += "(" + kuukausiPalkka + " € : " + kuukausiTyoPaivat + " = " + String.format(Locale.ENGLISH, "%.2f", paivaPalkka) + " X " + lomaPaivat + " = " + String.format(Locale.ENGLISH, "%.2f", lomaPalkka) + " €\n";
+		} else  if (lomaPalkkaKaava == LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI) {
+			resultString = "Kohtaan 2:\n";
+			resultString += palkkaYhteensa + " € : " + tyoPaivatYhteensa + " = " + String.format(Locale.ENGLISH, "%.2f", paivaPalkkaKeskiarvo) + " €/pv { X ";
+			if (record.isSalaried()) resultString += tyoPaivatPerViikkoKeskiarvo;
+			else resultString += "-";
+			resultString += " : 5 } X " + lomaPalkkaKerroin + " = " + String.format(Locale.ENGLISH, "%.2f", lomaPalkka) + " €\n";
+		}
+		else if (lomaPalkkaKaava == LomaPalkkaKaava.PROSENTTIPERUSTEINEN) {
+			resultString += "Kohtaan 4:\n";
+			resultString += palkkaYhteensa + " € + " + String.format(Locale.ENGLISH, "%.2f", saamattaJaanytPalkka) + " € X " + String.format(Locale.ENGLISH, "%.1f", korvausProsentti) + " % = " + String.format(Locale.ENGLISH, "%.2f", lomaPalkka) + " €";
+		}
+		return resultString;
+	}
+}

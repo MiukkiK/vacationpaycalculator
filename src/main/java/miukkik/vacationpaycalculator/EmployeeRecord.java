@@ -40,11 +40,17 @@ public class EmployeeRecord {
 	 * Lomaa ansaitaan 35 tunnin säännön perusteella työntekijän työskennellessä työsopimuksen mukaan alle 14 päivää kuukaudessa.
 	 */
 	public LomaPaivienAnsaintaSaanto getLomaPaivienAnsaintaSaanto(LocalDate startDate, LocalDate endDate) {
-		if (!getWorkDayChanges().hasChangedBetween(startDate, endDate) && (getWorkDayChanges().getValueOn(endDate).multiply(new BigDecimal(4)).compareTo(Rules.getKuukausiPaivaVaatimus()) != -1))
+		if (!workDayChanges.hasChangedBetween(startDate, endDate) && workDayChanges.getValueOn(endDate).multiply(new BigDecimal(4)).compareTo(Rules.getKuukausiPaivaVaatimus()) != -1)
 			return LomaPaivienAnsaintaSaanto.PAIVAT;
 		else return LomaPaivienAnsaintaSaanto.TUNNIT;
 	}
 
+	public LomaPalkkaKaava getLomaPalkkaKaava(int lomaPaivat, LocalDate startDate, LocalDate endDate) {
+		if (lomaPaivat == 0) return LomaPalkkaKaava.PROSENTTIPERUSTEINEN;
+		else if(salariedStatus && !workDayChanges.hasChangedBetween(startDate, endDate)) return LomaPalkkaKaava.KUUKAUSIPALKKAISET;
+		// LomaPalkkaKaava.TUNTIPALKKAISET_LOMAPALKKASOPIMUS not implemented yet
+		else return LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI;
+	}
 	
 	public boolean isSalaried() {
 		return salariedStatus;
