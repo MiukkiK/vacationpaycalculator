@@ -46,7 +46,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * 
 		 * Expected: TUNNIT
 		 */		
-		assertEquals("Lomapäivälaskutapa", VacationPayCalculator.LomaPaivienAnsaintaSaanto.TUNNIT, calculator.getLomaPaivaLaskuTapa());
+		assertEquals("Lomapäivälaskutapa", VacationPayCalculator.LomaPaivienAnsaintaSaanto.TUNNIT, calculator.getLomaPaiivienAnsaintaSaanto());
 		
 		/* Vuosilomalaki 18.3.2005/162: §7
 		 * Työssäolon veroisena pidetään työstä poissaoloaikaa, jolta työnantaja on lain mukaan 
@@ -92,7 +92,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * 
 		 * Expected: Category.PAIVAKOHTAINEN
 		 */		
-		assertEquals("Lomapalkkalaskutapa", VacationPayCalculator.LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI, calculator.getLomaPalkkaLaskuTapa());
+		assertEquals("Lomapalkkalaskutapa", VacationPayCalculator.LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI, calculator.getLomaPalkkaKaava());
 
 		/*
 		 * Testisyötteessä on 195 työpäivää. Niihin on laskettu päivät joilla on työtunteja, mutta ei merkintöjä "arkipyhäkorvauksista"
@@ -101,7 +101,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * Expected: 195
 		 */
 		assertEquals("Työpäivät", new BigDecimal(195), calculator.getTyoPaivatYhteensa());
-		assertEquals("Poissaolopäivät", new BigDecimal(36), calculator.getPoissaOloPaivatYhteensa());
+		assertEquals("Poissaolopäivät", new BigDecimal(36), calculator.getPoissaOlotYhteensa());
 		
 		/* PAM Kaupan alan TES: §21
 		 * Lomaraha on 50 % vuosilomalain mukaan ansaittua lomaa vastaavasta lomapalkasta.
@@ -142,7 +142,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * 
 		 * Expected: LomaPaivienAnsaintaSaanto.TUNNIT
 		 */
-		assertEquals("Lomapäivälaskutapa", VacationPayCalculator.LomaPaivienAnsaintaSaanto.TUNNIT, calculator.getLomaPaivaLaskuTapa());
+		assertEquals("Lomapäivälaskutapa", VacationPayCalculator.LomaPaivienAnsaintaSaanto.TUNNIT, calculator.getLomaPaiivienAnsaintaSaanto());
 
 		/*
 		 * Vuosilomalaki 18.3.2005/162: §11
@@ -155,7 +155,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * 
 		 * Expected: LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI
 		 */		
-		assertEquals("Palkanlaskutapa", VacationPayCalculator.LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI, calculator.getLomaPalkkaLaskuTapa());
+		assertEquals("Palkanlaskutapa", VacationPayCalculator.LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI, calculator.getLomaPalkkaKaava());
 
 		/*
 		 * Vuosilomalaki 18.3.2005/162: §6
@@ -268,7 +268,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		
 		assertEquals("Lomapäivät", 2, calculator.getLomaPaivat());
 
-		assertEquals("Lomapalkkakaava", VacationPayCalculator.LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI, calculator.getLomaPalkkaLaskuTapa());
+		assertEquals("Lomapalkkakaava", VacationPayCalculator.LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI, calculator.getLomaPalkkaKaava());
 
 		assertEquals("Palkka", new BigDecimal(500), calculator.getPalkkaYhteensa());
 
@@ -290,7 +290,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2000);
 
-		assertEquals("Lomapalkan laskukaava", VacationPayCalculator.LomaPalkkaKaava.PROSENTTIPERUSTEINEN, calculator.getLomaPalkkaLaskuTapa());
+		assertEquals("Lomapalkan laskukaava", VacationPayCalculator.LomaPalkkaKaava.PROSENTTIPERUSTEINEN, calculator.getLomaPalkkaKaava());
 		
 		assertEquals("LomaPalkka", new BigDecimal(32), calculator.getLomaPalkka());
 		
@@ -321,7 +321,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2000);
 		
-		assertEquals("Lomapalkkakaava", VacationPayCalculator.LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI, calculator.getLomaPalkkaLaskuTapa());
+		assertEquals("Lomapalkkakaava", VacationPayCalculator.LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI, calculator.getLomaPalkkaKaava());
 		
 		assertEquals("LomaPalkka", new BigDecimal(144), calculator.getLomaPalkka());
 		
@@ -377,7 +377,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2000);
 
-		assertEquals("Lomapalkkakaava", VacationPayCalculator.LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI, calculator.getLomaPalkkaLaskuTapa());
+		assertEquals("Lomapalkkakaava", VacationPayCalculator.LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI, calculator.getLomaPalkkaKaava());
 		
 		assertEquals("LomaPalkka", new BigDecimal(144), calculator.getLomaPalkka());
 		
@@ -410,10 +410,10 @@ public class VacationPayCalculatorTest extends TestCase {
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2001);
 	
-		assertEquals("Lomapäivien ansaintasääntö", VacationPayCalculator.LomaPaivienAnsaintaSaanto.PAIVAT, calculator.getLomaPaivaLaskuTapa());
+		assertEquals("Lomapäivien ansaintasääntö", VacationPayCalculator.LomaPaivienAnsaintaSaanto.PAIVAT, calculator.getLomaPaiivienAnsaintaSaanto());
 		assertEquals("Lomapäivät", 30, calculator.getLomaPaivat());
 		
-		assertEquals("Lomapalkkakaava", VacationPayCalculator.LomaPalkkaKaava.KUUKAUSIPALKKAISET, calculator.getLomaPalkkaLaskuTapa());
+		assertEquals("Lomapalkkakaava", VacationPayCalculator.LomaPalkkaKaava.KUUKAUSIPALKKAISET, calculator.getLomaPalkkaKaava());
 
 		assertEquals("Sopimuksen työpäivät kuukaudessa", new BigDecimal(20), calculator.getKuukausiTyoPaivat());
 		
@@ -430,7 +430,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2001);
 		
-		assertEquals("Lomapalkkakaava", VacationPayCalculator.LomaPalkkaKaava.PROSENTTIPERUSTEINEN, calculator.getLomaPalkkaLaskuTapa());
+		assertEquals("Lomapalkkakaava", VacationPayCalculator.LomaPalkkaKaava.PROSENTTIPERUSTEINEN, calculator.getLomaPalkkaKaava());
 		assertEquals("Lomapäivät", 0, calculator.getLomaPaivat());
 
 		assertEquals("Lomapalkka", new BigDecimal(900), calculator.getLomaPalkka());
