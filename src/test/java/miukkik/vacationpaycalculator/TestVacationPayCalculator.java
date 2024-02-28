@@ -13,7 +13,7 @@ import java.math.RoundingMode;
  * Also tests basic vacation pay calculations for salaried and general categories and percentile calculations.
  * @author Mia Kallio
  */
-public class VacationPayCalculatorTest extends TestCase {
+public class TestVacationPayCalculator extends TestCase {
 	
 	// Overloaded assert for BigDecimals to show the expected values instead of result of compare (-1, 0, 1).
 	public void assertEquals(String variableName, BigDecimal assertValue, BigDecimal testValue) {
@@ -30,6 +30,7 @@ public class VacationPayCalculatorTest extends TestCase {
 		testCase.getEmploymentList().setWageFrom(LocalDate.of(2009, 10, 15), new BigDecimal(11));
 		int vacationYear = 2010;
 		VacationPayCalculator calculator = new VacationPayCalculator(testCase, vacationYear);
+		calculator.printMonthlyInformation();
 		// System.out.println(calculator);
 		
 		/*
@@ -59,11 +60,14 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * 
 		 * -----
 		 * Työntekijällä on työssäolon veroisiksi laskettavia poissaoloja. koska sopimuksessa
-		 * ei ole määritetty tunteja, ne lasketaan keskimääräisen työpäivän tuntien mukaan.
+		 * ei ole määritetty tunteja, poissaolot eivät kerrytä työtunteja.
 		 * 
-		 * Expected: 12
+		 * Jos lomapäiviä olisi alle 24, työntekijällä olisi oikeus lisäpäiviin poissaolojen pohjalta.
+		 * Tällöin ne laskettaisiin keskimääräisten työtuntien perusteella.
+		 * 
+		 * Expected: 10
 		 */		
-		assertEquals("Lomanmääräytymiskuukaudet", 12, calculator.getLomanMaaraytymisKuukaudet());
+		assertEquals("Lomanmääräytymiskuukaudet", 10, calculator.getLomanMaaraytymisKuukaudet());
 		
 		/* 
 		 * Vuosilomalaki 18.3.2005/162: §5
@@ -76,10 +80,10 @@ public class VacationPayCalculatorTest extends TestCase {
 		 * 
 		 * Expected:
 		 * Lomapäiväkerroin - 2.5
-		 * Lomapäivät - 30
+		 * Lomapäivät - 25
 		 */				
 		assertEquals("Lomapäivät per määräytymiskuukausi", new BigDecimal("2.5"), calculator.getLomaPaivatPerMaaraytymisKuukausi());	
-		assertEquals("Lomapäivät", 30, calculator.getLomaPaivat());
+		assertEquals("Lomapäivät", 25, calculator.getLomaPaivat());
 		
 		/*
 		 * Vuosilomalaki 18.3.2005/162: §11
@@ -347,6 +351,9 @@ public class VacationPayCalculatorTest extends TestCase {
 		list.add(new EmploymentData(LocalDate.of(2000, 1, 13), "", new BigDecimal(8), BigDecimal.ZERO));
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(record, 2000);
+		
+		assertEquals("Määräytymiskuukaudet", 0, calculator.getLomanMaaraytymisKuukaudet());
+		assertEquals("Lomapalkkakaava", LomaPalkkaKaava.PROSENTTIPERUSTEINEN, calculator.getLomaPalkkaKaava());
 
 		assertEquals("LomaPalkka", new BigDecimal(96), calculator.getLomaPalkka());
 		

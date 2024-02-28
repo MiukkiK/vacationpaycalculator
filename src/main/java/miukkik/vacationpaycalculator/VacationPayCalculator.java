@@ -16,6 +16,9 @@ public class VacationPayCalculator {
 
 	private EmployeeRecord record;
 
+	private BigDecimal sovitutTunnit;
+	private BigDecimal sovitutPaivat;
+	
 	private LomaPaivienAnsaintaSaanto lomaPaivienAnsaintaSaanto;
 
 	private MonthlyData[] kuukausi;
@@ -59,10 +62,15 @@ public class VacationPayCalculator {
 		final LocalDate endDate = Rules.getLaskuKaudenLoppu(year);
 		final LocalDate startDate = endDate.minusYears(1).plusDays(1); 
 
+		sovitutPaivat = record.getWorkDayChanges().getValueOn(endDate);
+		sovitutTunnit = record.getWorkHourChanges().getValueOn(endDate);
+		
+		
 		kuukausi = initData(record, startDate, endDate);
 		calculateTotals(kuukausi);
 
-		paivaPalkkaKeskiarvo = palkkaYhteensa.divide(tyoPaivatYhteensa, 3, RoundingMode.DOWN);
+		if (tyoPaivatYhteensa.compareTo(BigDecimal.ZERO) != 0) paivaPalkkaKeskiarvo = palkkaYhteensa.divide(tyoPaivatYhteensa, 3, RoundingMode.DOWN);
+		else paivaPalkkaKeskiarvo = BigDecimal.ZERO;
 
 		lomaPaivienAnsaintaSaanto = record.getLomaPaivienAnsaintaSaanto(startDate, endDate);
 
@@ -76,7 +84,10 @@ public class VacationPayCalculator {
 		lomaPaivatPerMaaraytymisKuukausi = Rules.getLomanAnsainta(record.getStartDate(), endDate);
 		lomanMaaraytymisKuukaudet = calculateMaaraytymisKuukaudet(lomaPaivienAnsaintaSaanto, kuukausi);
 		lomaPaivat = calculateLomaPaivat(lomanMaaraytymisKuukaudet, lomaPaivatPerMaaraytymisKuukausi);
-
+		if ((sovitutPaivat == BigDecimal.ZERO) && (sovitutTunnit == BigDecimal.ZERO) && (lomaPaivat < 24)) {
+			lomaPaivat = calculateLomaPaivat(calculateMaaraytymisKuukaudet(LomaPaivienAnsaintaSaanto.LISAPAIVAT, kuukausi), lomaPaivatPerMaaraytymisKuukausi);
+			if (lomaPaivat > 24) lomaPaivat = 24;
+		}
 		if (lomaPaivat != 0) lomaRahaOikeus = true; else lomaRahaOikeus = false;
 
 		lomaPalkkaKaava = record.getLomaPalkkaKaava(lomaPaivat, startDate, endDate);
@@ -86,7 +97,7 @@ public class VacationPayCalculator {
 		switch (lomaPalkkaKaava) {
 		case KUUKAUSIPALKKAISET: 
 			kuukausiPalkka = record.getSalaryChanges().getValueOn(endDate);
-			kuukausiTyoPaivat = record.getWorkDayChanges().getValueOn(endDate).multiply(new BigDecimal(4));
+			kuukausiTyoPaivat = sovitutPaivat.multiply(new BigDecimal(4));
 
 			paivaPalkka = kuukausiPalkka.divide(kuukausiTyoPaivat);
 
@@ -114,10 +125,7 @@ public class VacationPayCalculator {
 			break;
 
 		case PROSENTTIPERUSTEINEN:
-			poissaOlotYhteensa = BigDecimal.ZERO;
-			for (MonthlyData data : kuukausi) {
-				poissaOlotYhteensa = poissaOlotYhteensa.add(data.getPoissaOlot());
-			}
+			
 			saamattaJaanytPalkka = poissaOlotYhteensa.multiply(paivaPalkkaKeskiarvo);
 			korvausProsentti = Rules.getKorvausProsentti(record.getStartDate(), endDate);
 			lomaPalkka = palkkaYhteensa.add(saamattaJaanytPalkka).multiply(korvausProsentti).movePointLeft(2);
@@ -197,16 +205,24 @@ public class VacationPayCalculator {
 	 */
 	private int calculateMaaraytymisKuukaudet(LomaPaivienAnsaintaSaanto ansaintaSaanto, MonthlyData[] monthlyData) {
 		int months = 0;
-		if (lomaPaivienAnsaintaSaanto == LomaPaivienAnsaintaSaanto.PAIVAT) {
+		switch (ansaintaSaanto) {
+		case PAIVAT: 
 			for (int i = 0; i < 12; i++) {
-				if (monthlyData[i].getTyoPaivat().add(monthlyData[i].getPoissaOlot()).compareTo(Rules.getKuukausiPaivaVaatimus()) != -1) months++;
+				if (monthlyData[i].getTyoPaivat().add(monthlyData[i].getPoissaOlot()).compareTo(Rules.getKuukausiPaivaVaatimus()) != -1) 
+					months++;
 			}
-		}
-		else if (lomaPaivienAnsaintaSaanto == LomaPaivienAnsaintaSaanto.TUNNIT) {
+			break;
+		case TUNNIT:
+			for (int i = 0; i < 12; i++) {
+				if (monthlyData[i].getPoissaOlot().multiply(sovitutTunnit.divide(new BigDecimal(5))).add(monthlyData[i].getTyoTunnit()).compareTo(Rules.getKuukausiTuntiVaatimus()) != -1)
+					months++;
+			}
+			break;
+		case LISAPAIVAT:
 			for (int i = 0; i < 12; i++) {
 				if (monthlyData[i].getPoissaOlot().multiply(calculateTyoTuntiKeskiarvo(monthlyData)).add(monthlyData[i].getTyoTunnit()).compareTo(Rules.getKuukausiTuntiVaatimus()) != -1)
 					months++;
-			}		
+			}
 		}
 		return months;
 	}
@@ -223,7 +239,8 @@ public class VacationPayCalculator {
 			hours = hours.add(data.getTyoTunnit());
 			days = days.add(data.getTyoPaivat());
 		}
-		return hours.divide(days, 3, RoundingMode.DOWN);
+		if (days == BigDecimal.ZERO) return BigDecimal.ZERO;
+		else return hours.divide(days, 3, RoundingMode.DOWN);
 	}
 
 	public void printMonthlyInformation() {
