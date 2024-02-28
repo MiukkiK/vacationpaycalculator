@@ -30,33 +30,32 @@ public class TestVacationPayCalculator extends TestCase {
 		testCase.getEmploymentList().setWageFrom(LocalDate.of(2009, 10, 15), new BigDecimal(11));
 		int vacationYear = 2010;
 		VacationPayCalculator calculator = new VacationPayCalculator(testCase, vacationYear);
-		calculator.printMonthlyInformation();
+
 		// System.out.println(calculator);
 		
 		/*
-		 * Vuosilomalaki 18.3.2005/162: §6
-		 * Jos työntekijä on sopimuksen mukaisesti työssä niin harvoina päivinä,
-		 * että hänelle ei tästä syystä kerry ainoatakaan 14 työssäolopäivää sisältävää
-		 * kalenterikuukautta tai vain osa kalenterikuukausista sisältää 14 työssäolopäivää,
-		 * täydeksi lomanmääräytymiskuukaudeksi katsotaan sellainen kalenterikuukausi, jonka
-		 * aikana työntekijälle on kertynyt vähintään 35 työtuntia tai 7 §:ssä tarkoitettua 
-		 * työssäolon veroista tuntia.
+		 * PAM Kaupan alan TES: §2
+		 * ...
+		 * Täysi lomanmääräytymiskuukausi on kalenterikuukausi, jonka aikana työntekijä on työskennellyt:
+		 * -vähintään 14 päivää
+		 * -vähintään 35 tuntia.
+		 * Lomaa ansaitaan joko 14 päivän tai 35 tunnin säännön perusteella.
+		 * Lomaa ansaitaan 35 tunnin säännön perusteella työntekijän työskennellessä työsopimuksen mukaan alle 14 päivää kuukaudessa.
 		 * 
 		 * -----
-		 * Jos työsopimuksessa ei ole sovittu päiviä, lasketaan tuntisäännön perusteella.
+		 * Jos työsopimuksessa ei ole sovittu vähintään 14 päivää kuukaudessa, lomapäivät lasketaan 35 tunnin säännön perusteella.
 		 * 
 		 * Expected: TUNNIT
 		 */		
 		assertEquals("Lomapäivälaskutapa", LomaPaivienAnsaintaSaanto.TUNNIT, calculator.getLomaPaiivienAnsaintaSaanto());
 		
-		/* Vuosilomalaki 18.3.2005/162: §7
-		 * Työssäolon veroisena pidetään työstä poissaoloaikaa, jolta työnantaja on lain mukaan 
-		 * velvollinen maksamaan työntekijälle palkan. Työssäolon veroisena pidetään myös aikaa, 
-		 * jolloin työntekijä on poissa työstä sellaisen työajan tasaamiseksi annetun vapaan vuoksi, 
-		 * jolla hänen keskimääräinen viikkotyöaikansa tasataan laissa säädettyyn enimmäismäärään. 
-		 * Saman kalenterikuukauden aikana viikkotyöajan tasaamiseksi annetuista vapaapäivistä 
-		 * työssäolon veroisina pidetään kuitenkin vain neljä päivää ylittäviä vapaapäiviä, 
-		 * jollei vapaata ole annettu yli kuuden arkipäivän pituisena yhtenäisenä vapaana.
+		/* 
+		 * Vuosilomalaki 15.3.2019/346 §7a 
+		 *
+		 * Työntekijällä on oikeus vuosilomaa täydentäviin lisävapaapäiviin, jos hänen täydeltä
+		 * lomanmääräytymisvuodelta ansaitsemansa vuosiloma alittaa 24 päivää 7 §:n 2 momentin 2 tai 3 
+		 * kohdassa tarkoitetun poissaolon vuoksi. 
+		 * ...
 		 * 
 		 * -----
 		 * Työntekijällä on työssäolon veroisiksi laskettavia poissaoloja. koska sopimuksessa
@@ -70,10 +69,11 @@ public class TestVacationPayCalculator extends TestCase {
 		assertEquals("Lomanmääräytymiskuukaudet", 10, calculator.getLomanMaaraytymisKuukaudet());
 		
 		/* 
-		 * Vuosilomalaki 18.3.2005/162: §5
-		 * Työntekijällä on oikeus saada lomaa kaksi ja puoli arkipäivää kultakin täydeltä lomanmääräytymiskuukaudelta. 
-		 * Jos työsuhde on lomanmääräytymisvuoden loppuun mennessä jatkunut yhdenjaksoisesti alle vuoden, 
-		 * työntekijällä on kuitenkin oikeus saada lomaa kaksi arkipäivää kultakin täydeltä lomanmääräytymiskuukaudelta. 
+		 * PAM Kaupan alan TES: §2
+		 * Lomaa ansaitaan täydeltä lomanmääräytymiskuukaudelta työsuhteen kestettyä lomanmääräytymisvuoden (1.4.–31.3.) loppuun mennessä:
+		 * -alle vuoden: 2 arkipäivää
+		 * -vähintään vuoden: 2,5 arkipäivää.
+		 * ...
 		 * 
 		 * -----
 		 * Työntekijä on ollut työsuhteessa vuodesta 2008, ja isompi kerroin täyttyy maaliskuussa 2009.
@@ -83,7 +83,22 @@ public class TestVacationPayCalculator extends TestCase {
 		 * Lomapäivät - 25
 		 */				
 		assertEquals("Lomapäivät per määräytymiskuukausi", new BigDecimal("2.5"), calculator.getLomaPaivatPerMaaraytymisKuukausi());	
+		
 		assertEquals("Lomapäivät", 25, calculator.getLomaPaivat());
+		
+		/*
+		 * Testisyötteessä on 195 työpäivää. Niihin on laskettu päivät joilla on työtunteja, mutta ei merkintöjä "arkipyhäkorvauksista"
+		 * Esimerkkisyötteessä ei ole yli- tai hätätyötunteja, joten ne eivät koske lopputulosta.
+		 * 
+		 * Expected: 195
+		 */
+		assertEquals("Työpäivät", new BigDecimal(195), calculator.getTyoPaivatYhteensa());
+		
+		/*
+		 * Testisyötteessä on 36 lomapäivää. Lomapäiviksi Niihin laskettiin päivät joissa ei ole työtunteja ja merkinnöissä on 
+		 * kirjoitettu joku kuvaus vapaapäivän luonteesta (esim. "vanhempainvapaa").
+		 */
+		assertEquals("Poissaolopäivät", new BigDecimal(36), calculator.getPoissaOlotYhteensa());
 		
 		/*
 		 * Vuosilomalaki 18.3.2005/162: §11
@@ -94,18 +109,31 @@ public class TestVacationPayCalculator extends TestCase {
 		 * -----
 		 * Jos työntekijä ei ole kuukausipalkkainen ja hänellä on lomapäiviä, lomapalkka lasketaan keskipäiväpalkan pohjalta.
 		 * 
-		 * Expected: Category.PAIVAKOHTAINEN
+		 * Expected: TUNTIPALKKAISET_VUOSILOMALAKI
 		 */		
 		assertEquals("Lomapalkkalaskutapa", LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI, calculator.getLomaPalkkaKaava());
 
 		/*
-		 * Testisyötteessä on 195 työpäivää. Niihin on laskettu päivät joilla on työtunteja, mutta ei merkintöjä "arkipyhäkorvauksista"
-		 * Esimerkkisyötteessä ei ole yli- tai hätätyötunteja, joten ne eivät koske lopputulosta.
+		 * Keskimääräinen päiväpalkka saadaan jakamalla ansaittu tulo työpäivien määrällä.
 		 * 
-		 * Expected: 195
+		 * Expected: 14358 / 195 (~73.630)
 		 */
-		assertEquals("Työpäivät", new BigDecimal(195), calculator.getTyoPaivatYhteensa());
-		assertEquals("Poissaolopäivät", new BigDecimal(36), calculator.getPoissaOlotYhteensa());
+		assertEquals("Palkka", new BigDecimal(14358), calculator.getPalkkaYhteensa());
+		
+		assertEquals("Päiväpalkkakeskiarvo", new BigDecimal("73.630"), calculator.getPaivaPalkkaKeskiarvo());
+		
+		/*
+		 * Vuosilomalaki 18.3.2005/162: §11
+		 * Muun kuin viikko- tai kuukausipalkalla työskentelevän sellaisen työntekijän vuosilomapalkka,
+		 * joka sopimuksen mukaan työskentelee vähintään 14 päivänä kalenterikuukaudessa, lasketaan kertomalla 
+		 * hänen keskipäiväpalkkansa lomapäivien määrän perusteella määräytyvällä kertoimella.
+		 * 
+		 * -----
+		 * Kerroin on määritelty vuosilomalaissa, se on epälineaarinen ~0.9 per päivä asteikko. 25 päivää vastaava luku on 23.2
+		 * 
+		 * Expected: 23.2
+		 */
+		assertEquals("Lomapalkkakerroin", new BigDecimal("23.2"), calculator.getLomaPalkkaKerroin());
 		
 		/* PAM Kaupan alan TES: §21
 		 * Lomaraha on 50 % vuosilomalain mukaan ansaittua lomaa vastaavasta lomapalkasta.
@@ -114,13 +142,19 @@ public class TestVacationPayCalculator extends TestCase {
 		 *  -aloittaessa loman ilmoitettuna tai sovittuna aikana ja
 		 *  -palatessa työhön heti loman päätyttyä.
 		 *  
-		 *  
 		 *  -----
-		 *  Työntekijä saa lomapalkkaa, joten hänellä on oikeus lomarahaan.
+		 *  Testidata ei ota kantaa lomien aloitusaikaan, joten voimme päätellä vain lomarahan suuruuden, 50% lomapäivistä saadusta lomapalkasta.
 		 *  
-		 *  expected: true
+		 *  Expected: 
+		 *  Lomarahaoikeus - true
+		 *  Lomaraha - 1708.218 / 2 (854.108)
 		 */
-		assertEquals("Lomarahaoikeus", true, calculator.oikeusLomaRahaan());					
+		
+		assertEquals("Lomarahaoikeus", true, calculator.oikeusLomaRahaan());		
+		
+		assertEquals("Lomapalkka", new BigDecimal("1708.216"), calculator.getLomaPalkka().round(new MathContext(7, RoundingMode.DOWN)));	
+		
+		assertEquals("Lomaraha", new BigDecimal("854.108"), calculator.getLomaRaha().round(new MathContext(6, RoundingMode.DOWN)));
 	}
 	
 	public void testCaseB() {
@@ -130,24 +164,64 @@ public class TestVacationPayCalculator extends TestCase {
 		testCase.getEmploymentList().setWageFrom(LocalDate.of(2009, 10, 15), new BigDecimal(11));
 		
 		VacationPayCalculator calculator = new VacationPayCalculator(testCase, 2010);
+		
 		// System.out.println(calculator);
 		
 		/*
-		 * Vuosilomalaki 18.3.2005/162: §6
-		 * Jos työntekijä on sopimuksen mukaisesti työssä niin harvoina päivinä,
-		 * että hänelle ei tästä syystä kerry ainoatakaan 14 työssäolopäivää sisältävää
-		 * kalenterikuukautta tai vain osa kalenterikuukausista sisältää 14 työssäolopäivää,
-		 * täydeksi lomanmääräytymiskuukaudeksi katsotaan sellainen kalenterikuukausi, jonka
-		 * aikana työntekijälle on kertynyt vähintään 35 työtuntia tai 7 §:ssä tarkoitettua 
-		 * työssäolon veroista tuntia.
-		 *
+		 * PAM Kaupan alan TES: §2
+		 * ...
+		 * Täysi lomanmääräytymiskuukausi on kalenterikuukausi, jonka aikana työntekijä on työskennellyt:
+		 * -vähintään 14 päivää
+		 * -vähintään 35 tuntia.
+		 * Lomaa ansaitaan joko 14 päivän tai 35 tunnin säännön perusteella.
+		 * Lomaa ansaitaan 35 tunnin säännön perusteella työntekijän työskennellessä työsopimuksen mukaan alle 14 päivää kuukaudessa.
+		 * 
 		 * -----
 		 * Jos työsopimuksessa ei ole sovittu vähintään 14 päivää kuukaudessa, lomapäivät lasketaan 35 tunnin säännön perusteella.
 		 * 
-		 * Expected: LomaPaivienAnsaintaSaanto.TUNNIT
-		 */
+		 * Expected: TUNNIT
+		 */		
 		assertEquals("Lomapäivälaskutapa", LomaPaivienAnsaintaSaanto.TUNNIT, calculator.getLomaPaiivienAnsaintaSaanto());
 
+		/*
+		 * Testisyötteessä on kaksi kuukautta jossa ei ole 35 työtuntia, 7/2009 ja 12/2009. Niissä on kuitenkin työssäolon veroisia päiviä korvaamaan vaaditut työtunnit.
+		 * 
+		 * Expected: 12
+		 */
+		assertEquals("Lomanmääräytymiskuukaudet", 12, calculator.getLomanMaaraytymisKuukaudet());
+		
+		/* 
+		 * PAM Kaupan alan TES: §2
+		 * Lomaa ansaitaan täydeltä lomanmääräytymiskuukaudelta työsuhteen kestettyä lomanmääräytymisvuoden (1.4.–31.3.) loppuun mennessä:
+		 * -alle vuoden: 2 arkipäivää
+		 * -vähintään vuoden: 2,5 arkipäivää.
+		 * ...
+		 * 
+		 * -----
+		 * Työntekijä on ollut työsuhteessa vuodesta 2008, ja isompi kerroin täyttyy maaliskuussa 2009.
+		 * 
+		 * Expected:
+		 * Lomapäiväkerroin - 2.5
+		 * Lomapäivät - 30
+		 */				
+		assertEquals("Lomapäivät per määräytymiskuukausi", new BigDecimal("2.5"), calculator.getLomaPaivatPerMaaraytymisKuukausi());
+		
+		assertEquals("Lomapäivät", 30, calculator.getLomaPaivat());
+		
+		/*
+		 * Testisyötteessä on 195 työpäivää. Niihin on laskettu päivät joilla on työtunteja, mutta ei merkintöjä "arkipyhäkorvauksista"
+		 * Esimerkkisyötteessä ei ole yli- tai hätätyötunteja, joten ne eivät koske lopputulosta.
+		 * 
+		 * Expected: 195
+		 */
+		assertEquals("Työpäivät", new BigDecimal(195), calculator.getTyoPaivatYhteensa());
+		
+		/*
+		 * Testisyötteessä on 36 lomapäivää. Lomapäiviksi Niihin laskettiin päivät joissa ei ole työtunteja ja merkinnöissä on 
+		 * kirjoitettu joku kuvaus vapaapäivän luonteesta (esim. "vanhempainvapaa").
+		 */
+		assertEquals("Poissaolopäivät", new BigDecimal(36), calculator.getPoissaOlotYhteensa());
+		
 		/*
 		 * Vuosilomalaki 18.3.2005/162: §11
 		 * Muun kuin viikko- tai kuukausipalkalla työskentelevän sellaisen työntekijän vuosilomapalkka,
@@ -160,68 +234,16 @@ public class TestVacationPayCalculator extends TestCase {
 		 * Expected: LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI
 		 */		
 		assertEquals("Palkanlaskutapa", LomaPalkkaKaava.TUNTIPALKKAISET_VUOSILOMALAKI, calculator.getLomaPalkkaKaava());
-
-		/*
-		 * Vuosilomalaki 18.3.2005/162: §6
-		 * Jos työntekijä on sopimuksen mukaisesti työssä niin harvoina päivinä,
-		 * että hänelle ei tästä syystä kerry ainoatakaan 14 työssäolopäivää sisältävää
-		 * kalenterikuukautta tai vain osa kalenterikuukausista sisältää 14 työssäolopäivää,
-		 * täydeksi lomanmääräytymiskuukaudeksi katsotaan sellainen kalenterikuukausi, jonka
-		 * aikana työntekijälle on kertynyt vähintään 35 työtuntia tai 7 §:ssä tarkoitettua 
-		 * työssäolon veroista tuntia.
-		 * 
-		 * §7
-		 * Työssäolon veroisena pidetään työstä poissaoloaikaa, jolta työnantaja on lain mukaan velvollinen maksamaan työntekijälle palkan.
-		 *
-		 * -----
-		 * Testisyötteessä on kaksi kuukautta jossa ei ole 35 työtuntia, 7/2009 ja 12/2009. Niissä on kuitenkin työssäolon veroisia päiviä korvaamaan vaaditut työtunnit.
-		 * 
-		 * Expected: 12
-		 */
-		assertEquals("Lomanmääräytymiskuukaudet", 12, calculator.getLomanMaaraytymisKuukaudet());
 		
-		/* 
-		 * Vuosilomalaki 18.3.2005/162: §5
-		 * Työntekijällä on oikeus saada lomaa kaksi ja puoli arkipäivää kultakin täydeltä lomanmääräytymiskuukaudelta. 
-		 * Jos työsuhde on lomanmääräytymisvuoden loppuun mennessä jatkunut yhdenjaksoisesti alle vuoden, 
-		 * työntekijällä on kuitenkin oikeus saada lomaa kaksi arkipäivää kultakin täydeltä lomanmääräytymiskuukaudelta. 
-		 * 
-		 * -----
-		 * Työntekijä on ollut työsuhteessa vuodesta 2008, ja isompi kerroin täyttyy maaliskuussa 2009.
-		 * 
-		 * Expected: 
-		 * Lomapäiväkerroin - 2.5
-		 * Lomapäivät - 30
-		 */
-		assertEquals("Lomapäivät per määräytymiskuukausi", new BigDecimal("2.5"), calculator.getLomaPaivatPerMaaraytymisKuukausi());
-		assertEquals("Lomapäivät", 30, calculator.getLomaPaivat());
-		
-		/*
-		 * Testisyötteessä on 195 työpäivää. Niihin on laskettu päivät joilla on työtunteja, mutta ei merkintöjä "arkipyhäkorvauksista"
-		 * Esimerkkisyötteessä ei ole yli- tai hätätyötunteja, joten ne eivät koske lopputulosta.
-		 * 
-		 * Expected: 195
-		 */		
-		assertEquals("Työpäivät", new BigDecimal(195), calculator.getTyoPaivatYhteensa());
-		
-
 		/*
 		 * Keskimääräinen päiväpalkka saadaan jakamalla ansaittu tulo työpäivien määrällä.
 		 * 
 		 * Expected: 14358 / 195 (~73.630)
 		 */
+		assertEquals("Palkka", new BigDecimal(14358), calculator.getPalkkaYhteensa());
+		
 		assertEquals("Päiväpalkkakeskiarvo", new BigDecimal("73.630"), calculator.getPaivaPalkkaKeskiarvo());
 
-		/*
-		 * Vuosilomalaki 18.3.2005/162: 
-		 * Jos työntekijän viikoittaisten työpäivien määrä on sopimuksen mukaan pienempi tai suurempi kuin viisi,
-		 * keskipäiväpalkka kerrotaan viikoittaisten työpäivien määrällä ja jaetaan viidellä.
-		 * 
-		 * -----
-		 * Testitapauksessa ei ole määritetty työpäiviä joten tämä kohta ei koske testitapausta.
-		 */
-		
-		
 		/*
 		 * Vuosilomalaki 18.3.2005/162: §11
 		 * Muun kuin viikko- tai kuukausipalkalla työskentelevän sellaisen työntekijän vuosilomapalkka,
@@ -249,12 +271,12 @@ public class TestVacationPayCalculator extends TestCase {
 		 *  Lomarahaoikeus - true
 		 *  Lomaraha - 2046.9418 / 2 (1023.4709)
 		 */
-		assertEquals("Lomarahaoikeus", true, calculator.oikeusLomaRahaan());
-		assertEquals("Lomaraha", new BigDecimal("1023.457"), calculator.getLomaRaha().round(new MathContext(7, RoundingMode.DOWN)));
 		
-		assertEquals("Palkka", new BigDecimal(14358), calculator.getPalkkaYhteensa());
+		assertEquals("Lomarahaoikeus", true, calculator.oikeusLomaRahaan());	
 		
 		assertEquals("Lomapalkka", new BigDecimal("2046.914"), calculator.getLomaPalkka().round(new MathContext(7, RoundingMode.DOWN)));	
+		
+		assertEquals("Lomaraha", new BigDecimal("1023.457"), calculator.getLomaRaha().round(new MathContext(7, RoundingMode.DOWN)));		
 	}
 	
 	public void testBasicVacationPay() {
